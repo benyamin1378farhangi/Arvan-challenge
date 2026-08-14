@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Section from "@/components/layout/Section";
 import Dropdown from "@/components/ui/Dropdown";
 import Modal from "@/components/ui/Modal";
@@ -11,6 +11,7 @@ import Button from "@/components/ui/Button";
 import Toast from "@/components/ui/Toast";
 import { useArticles } from "@/hooks/useArticles";
 import { useDeleteArticle } from "@/hooks/useDeleteArticle";
+import { useArticleOverrides } from "@/hooks/useArticleOverrides";
 import { ROUTES } from "@/constants/routes";
 import { ARTICLES_PAGE_SIZE } from "@/constants/pagination";
 
@@ -35,16 +36,10 @@ const SUCCESS_TOAST_DURATION_MS = 4000;
 
 // A separate component, mounted fresh via `key` each time the triggering
 // query param changes (see the call site) — not local state synced from a
-// prop via an effect. Delete redirects to this exact same route
-// (/articles), just with a different ?deleted=1, so ArticlesList itself
-// stays mounted and only re-renders with new props instead of remounting;
-// syncing local state from a prop change in an effect is exactly the
-// pattern React's own rules (and this project's ESLint config) flag as an
-// anti-pattern. Remounting this small component via `key` sidesteps that
-// entirely — its own `useState(true)` + timeout only ever run once per
-// mount, no derived-state sync needed. Create/Edit happened to already
-// work before this existed because they redirect here *from* a different
-// route, which remounts everything.
+// prop/param via an effect, which is exactly the pattern this project's
+// ESLint config (react-hooks/set-state-in-effect) flags as an
+// anti-pattern. Remounting via `key` sidesteps that entirely: its own
+// `useState(true)` + timeout only ever run once per mount.
 function SuccessToast({ type }) {
   const [visible, setVisible] = useState(true);
 
@@ -62,24 +57,38 @@ function SuccessToast({ type }) {
   );
 }
 
-export default function ArticlesList({
-  page,
-  createdSuccess = false,
-  updatedSuccess = false,
-  deletedSuccess = false,
-}) {
+export default function ArticlesList({ page }) {
   const router = useRouter();
+  // Read directly from the URL instead of a Server-Component-threaded
+  // prop: Delete/Edit redirect to /articles (or the same /articles) via
+  // router.push, and a plain prop wasn't reliably updating in time — this
+  // is exactly what useSearchParams() is for, and it's what next/navigation
+  // recommends for reactive access to the current URL in a Client
+  // Component. Requires the Suspense boundary added around this component
+  // at both call sites (articles/page.js, articles/page/[page]/page.js).
+  const searchParams = useSearchParams();
+  const successToastType = searchParams.get("created") === "1"
+    ? "created"
+    : searchParams.get("updated") === "1"
+      ? "updated"
+      : searchParams.get("deleted") === "1"
+        ? "deleted"
+        : null;
+
   const { data, isLoading, isError, refetch } = useArticles(page);
+  const overrides = useArticleOverrides();
   const [deleteTarget, setDeleteTarget] = useState(null);
   const deleteArticleMutation = useDeleteArticle();
 
-  const successToastType = createdSuccess
-    ? "created"
-    : updatedSuccess
-      ? "updated"
-      : deletedSuccess
-        ? "deleted"
-        : null;
+  // What DummyJSON actually returned, with this session's local
+  // delete/edit overrides applied on top — see useArticleOverrides for why
+  // this exists instead of trusting a refetch after a mutation.
+  const posts = (data?.posts ?? [])
+    .filter((post) => !overrides.deletedIds.includes(post.id))
+    .map((post) => {
+      const override = overrides.updatedById[post.id];
+      return override ? { ...post, ...override } : post;
+    });
 
   const totalPages = data ? Math.ceil(data.total / ARTICLES_PAGE_SIZE) : 0;
 
@@ -115,12 +124,11 @@ export default function ArticlesList({
   return (
     <Section className="p-6">
       {/* key={successToastType} mounts a fresh SuccessToast whenever the
-          type changes, which is what actually fixes the bug this replaced
-          (see the component's own comment). Known gap: two deletes in a
-          row both redirect to the literal same "?deleted=1" URL, so a
-          second delete within the first toast's 4s window reuses the same
-          key/instance rather than resetting its timer — not addressed, a
-          low-probability edge case not worth a nonce-based key for. */}
+          type changes. Known gap: two deletes in a row both redirect to
+          the literal same "?deleted=1" URL, so a second delete within the
+          first toast's 4s window reuses the same key/instance rather than
+          resetting its timer — not addressed, a low-probability edge case
+          not worth a nonce-based key for. */}
       {successToastType && <SuccessToast key={successToastType} type={successToastType} />}
 
       <div className="mb-4 border-b border-neutral-st3 pb-4">
@@ -146,7 +154,7 @@ export default function ArticlesList({
         </div>
       )}
 
-      {!isLoading && !isError && data?.posts.length === 0 && (
+      {!isLoading && !isError && data && posts.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
           <p className="text-body-2 tracking-body-2 text-neutral-fg2">
             No articles yet.
@@ -157,7 +165,7 @@ export default function ArticlesList({
         </div>
       )}
 
-      {!isLoading && !isError && data && data.posts.length > 0 && (
+      {!isLoading && !isError && data && posts.length > 0 && (
         <>
           {/* >=md: the original table, now inside an overflow-x-auto
               wrapper as a safety fallback (Phase 9) — below md it's
@@ -180,7 +188,7 @@ export default function ArticlesList({
                 </tr>
               </thead>
               <tbody>
-                {data.posts.map((post) => (
+                {posts.map((post) => (
                   <tr key={post.id} className="border-b border-neutral-st3">
                     <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg1">
                       {post.id}
@@ -222,7 +230,7 @@ export default function ArticlesList({
               (the id has no real meaning to a reader; Title is the primary
               identifier here). */}
           <div className="flex flex-col gap-3 md:hidden">
-            {data.posts.map((post) => (
+            {posts.map((post) => (
               <div key={post.id} className="rounded-lg border border-neutral-st3 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-body-2 tracking-body-2 font-semibold text-neutral-fg1">
@@ -251,7 +259,10 @@ export default function ArticlesList({
           {/* Bottom-right of the card, not centered — confirmed against the
               Figma "Dashboard -> Article updated" reference (the
               pagination control's center sits well right of the card's
-              center, roughly flush with the table's right edge). */}
+              center, roughly flush with the table's right edge). Note:
+              totalPages still comes from DummyJSON's unmodified `total` —
+              deleting a row locally doesn't (and can't honestly) shrink
+              the real page count. */}
           <div className="mt-4 flex justify-end">
             <Pagination
               currentPage={page}

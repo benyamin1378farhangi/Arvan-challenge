@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "@/lib/query/getQueryClient";
@@ -30,7 +31,10 @@ export default async function ArticlesPagedPage({ params }) {
   // which ArticlesList already renders as the empty state.
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ArticlesList page={page} />
+      {/* See articles/page.js — ArticlesList uses useSearchParams(). */}
+      <Suspense fallback={null}>
+        <ArticlesList page={page} />
+      </Suspense>
     </HydrationBoundary>
   );
 }

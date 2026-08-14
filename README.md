@@ -127,6 +127,17 @@ for pagination/refetching. Both routes are marked `force-dynamic` — this
 list is paginated, live data behind auth, so it has no business being
 baked into the build as static HTML.
 
+**Success Toasts** (`?created=1`/`?updated=1`/`?deleted=1`) are read via
+`useSearchParams()` directly inside `ArticlesList`, not threaded down as a
+prop from the Server Component. Delete redirects to this exact same route
+(`/articles`), just with a different query string, so `ArticlesList` stays
+mounted and only gets new props on that navigation — a plain prop wasn't
+reliably reflecting the change in time, while `useSearchParams()` is
+next/navigation's own mechanism for reactively reading the current URL in
+a Client Component and updates correctly regardless of that timing. This
+requires wrapping `<ArticlesList>` in `<Suspense>` at both call sites,
+which Next.js enforces for anything using `useSearchParams()`.
+
 **Pagination.** Page 1's canonical URL is `/articles`; later pages are
 `/articles/page/:page`. Visiting `/articles/page/1` redirects to
 `/articles`. A non-numeric or sub-1 page (`/articles/page/abc`,
@@ -153,10 +164,35 @@ at all:
 **Excerpt** *is* derivable — Figma's own note for that column says "first
 20 words of article body", which is what's shown.
 
-**Delete** is intentionally partial in this phase: the row menu's Delete
-action opens the confirmation modal, and Cancel/Confirm both close it, but
-Confirm doesn't call the DELETE endpoint yet — that (plus the
-success/error Toast) is separate scope.
+**Delete** — see the "Delete Article" section below for the full flow;
+this note is a leftover from an earlier phase where it was intentionally
+partial and is no longer accurate.
+
+## Local Overrides (why the list actually updates despite DummyJSON)
+
+Create/Edit/Delete all get a real `200`/`201` from DummyJSON, but none of
+it is persisted — a follow-up `GET` always returns the original, untouched
+data (verified directly for each, see below). Naively calling
+`invalidateQueries` after a successful mutation would trigger a refetch
+that brings back the exact same list, making a delete look like it didn't
+work and an edit look like it didn't save.
+
+Instead, `useDeleteArticle`/`useUpdateArticle` record what actually
+happened — a deleted id, or a post's new fields — into a small
+session-only cache entry (`queryKeys.articles.localOverrides`, read via
+`useArticleOverrides`) that's completely separate from the real articles
+list query. `ArticlesList` applies it on top of whatever the list query
+returns, every render, so a deleted row disappears immediately and an
+edited row shows its new title/body/tags immediately — regardless of how
+many times the underlying list gets refetched or re-hydrated from the
+server in the background.
+
+This is deliberately not written to `localStorage` or anything else
+durable: it's exactly as long-lived as the mutation "succeeded" on
+DummyJSON — gone on a hard refresh, which is the honest behavior given the
+mock backend never really remembered it either. `total`/page count are
+left alone (still DummyJSON's real numbers) since there's no honest way to
+adjust them for a deletion the backend doesn't actually know about.
 
 ## Create Article
 
@@ -240,7 +276,8 @@ screen for this state, so nothing was designed for it here either.
 `200` with the edited fields echoed back, but a `GET` for that id right
 after still shows the untouched original (verified directly). The edit
 "succeeds" honestly from the API's point of view; DummyJSON just never
-keeps it.
+keeps it — the Dashboard row still shows the new title/body/tags
+immediately regardless, via Local Overrides (above).
 
 ## Delete Article
 
@@ -248,9 +285,10 @@ keeps it.
 (unchanged since Phase 3/5 — its `isConfirming` prop already disabled
 Confirm and showed a loading spinner, so nothing new was needed there).
 Confirm now runs `useDeleteArticle` → `DELETE /api/articles/{id}` →
-DummyJSON → invalidate the articles cache → close the modal → redirect to
-`/articles?deleted=1` → success Toast on the Dashboard, same shape as
-Create/Edit. Cancel closes the modal and resets the mutation's error state
+DummyJSON → record the id in Local Overrides (see above — not a cache
+invalidation, since DummyJSON never actually deletes anything for a
+refetch to reflect) → close the modal → redirect to `/articles?deleted=1`
+→ success Toast on the Dashboard, same shape as Create/Edit. Cancel closes the modal and resets the mutation's error state
 (so a failed delete doesn't leave a stale error Toast showing the next time
 the modal opens for a different article). A failed delete keeps the modal
 open and shows an error Toast in the Dashboard instead of navigating away.
@@ -267,7 +305,9 @@ but a `GET` for that id immediately after still returns the original,
 un-deleted post (verified directly). `/api/articles/[id]`'s `DELETE`
 handler doesn't forward any of that DummyJSON response to the client — it
 returns only `{ success: true, id }`, since nothing else about the
-(never-actually-deleted) record is meaningful to show.
+(never-actually-deleted) record is meaningful to show. The row still
+disappears from the Dashboard immediately — see Local Overrides above for
+how, despite this.
 
 ## Known Limitations / Future Improvements
 
@@ -283,9 +323,12 @@ returns only `{ success: true, id }`, since nothing else about the
 - **Article author is shown as `User #{id}`, not a real username** —
   DummyJSON posts don't include one, and resolving it would mean an extra
   request per table row.
-- **Create/Edit/Delete don't actually persist changes** (see Create
-  Article / Edit Article / Delete Article above) — a DummyJSON limitation,
-  not an app bug; documented so it isn't mistaken for one.
+- **Create/Edit/Delete don't actually persist changes on DummyJSON's end**
+  (see Create Article / Edit Article / Delete Article above) — a DummyJSON
+  limitation, not an app bug. The Dashboard list itself stays accurate
+  within a session via the Local Overrides mechanism (above); a hard
+  refresh (or DummyJSON's data from any other client) always shows the
+  real, unmodified state.
 - **The Tags panel briefly shows "Loading tags…" on first paint** of the
   Create page — unlike the articles list, this query isn't server-prefetched.
   A secondary panel's brief loading state was judged not worth the same
@@ -300,3 +343,11 @@ returns only `{ success: true, id }`, since nothing else about the
   — confirmed that the right Tailwind classes are present and compiled
   (`lg:hidden`, `md:block`, the drawer's `-translate-x-full`, etc.), not
   that they look correct in an actual viewport.
+- **Client-side navigation while a component stays mounted (e.g. the
+  Delete redirect) can only be verified by reading the code, not curl** —
+  every curl request is a fresh page load, so it can confirm a URL renders
+  the right thing on its own, but not that a `router.push()` from an
+  already-mounted page actually reaches that state without a manual
+  refresh. The `useSearchParams()`/`key`-remount fixes here follow
+  documented React/Next.js behavior for exactly this scenario, but a real
+  browser is needed to watch the click-through happen.

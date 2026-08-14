@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import Section from "@/components/layout/Section";
 import Dropdown from "@/components/ui/Dropdown";
 import Modal from "@/components/ui/Modal";
@@ -11,7 +12,7 @@ import Button from "@/components/ui/Button";
 import Toast from "@/components/ui/Toast";
 import { useArticles } from "@/hooks/useArticles";
 import { useDeleteArticle } from "@/hooks/useDeleteArticle";
-import { useArticleOverrides } from "@/hooks/useArticleOverrides";
+import { useArticleOverrides, recordDeletedArticle } from "@/hooks/useArticleOverrides";
 import { ROUTES } from "@/constants/routes";
 import { ARTICLES_PAGE_SIZE } from "@/constants/pagination";
 
@@ -75,6 +76,7 @@ export default function ArticlesList({ page }) {
         ? "deleted"
         : null;
 
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useArticles(page);
   const overrides = useArticleOverrides();
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -83,12 +85,19 @@ export default function ArticlesList({ page }) {
   // What DummyJSON actually returned, with this session's local
   // delete/edit overrides applied on top — see useArticleOverrides for why
   // this exists instead of trusting a refetch after a mutation.
-  const posts = (data?.posts ?? [])
+  const fetchedPosts = (data?.posts ?? [])
     .filter((post) => !overrides.deletedIds.includes(post.id))
     .map((post) => {
       const override = overrides.updatedById[post.id];
       return override ? { ...post, ...override } : post;
     });
+
+  // Articles created this session, newest first, on top of page 1 only —
+  // there's no real "created date" to sort DummyJSON's own posts by
+  // (see recordCreatedArticle), so this is the only sense in which "new
+  // articles appear first" can honestly be implemented.
+  const localCreatedPosts = page === 1 ? overrides.createdArticles : [];
+  const posts = [...localCreatedPosts, ...fetchedPosts];
 
   const totalPages = data ? Math.ceil(data.total / ARTICLES_PAGE_SIZE) : 0;
 
@@ -106,6 +115,17 @@ export default function ArticlesList({ page }) {
     // off null instead of just being a no-op.
     if (!deleteTarget) return;
 
+    if (deleteTarget.isLocal) {
+      // Never existed on DummyJSON to begin with (see
+      // recordCreatedArticle) — calling DELETE on its fake id would just
+      // 404. Remove it from the local list directly and treat it exactly
+      // like a normal successful delete otherwise.
+      recordDeletedArticle(queryClient, deleteTarget.id);
+      setDeleteTarget(null);
+      router.push(`${ROUTES.articles}?deleted=1`);
+      return;
+    }
+
     deleteArticleMutation.mutate(deleteTarget.id, {
       onSuccess: () => {
         setDeleteTarget(null);
@@ -115,9 +135,14 @@ export default function ArticlesList({ page }) {
   };
 
   // Shared by both the >=md table row and the <md card (Phase 9) so the
-  // Edit/Delete wiring only exists once.
+  // Edit/Delete wiring only exists once. Edit is omitted for locally
+  // created articles — the Edit page fetches the article server-side by
+  // id from DummyJSON, which has no record of a locally-generated id and
+  // would 404.
   const getActionItems = (post) => [
-    { label: "Edit", onClick: () => router.push(ROUTES.editArticle(post.id)) },
+    ...(post.isLocal
+      ? []
+      : [{ label: "Edit", onClick: () => router.push(ROUTES.editArticle(post.id)) }]),
     { label: "Delete", danger: true, onClick: () => setDeleteTarget(post) },
   ];
 
@@ -198,9 +223,11 @@ export default function ArticlesList({ page }) {
                     </td>
                     {/* DummyJSON posts only carry a numeric userId, not a
                         username — resolving it to a real name would mean an
-                        extra request per row (see Phase 5 plan). */}
+                        extra request per row (see Phase 5 plan). A locally
+                        created article shows "You" instead, since we do
+                        know, honestly, who just created it. */}
                     <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
-                      User #{post.userId}
+                      {post.isLocal ? "You" : `User #${post.userId}`}
                     </td>
                     <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
                       {post.tags.join(", ")}
@@ -209,8 +236,12 @@ export default function ArticlesList({ page }) {
                       {getExcerpt(post.body)}
                     </td>
                     {/* DummyJSON posts have no date field at all — shown as
-                        "—" rather than a fabricated timestamp. */}
-                    <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">—</td>
+                        "—" rather than a fabricated timestamp. A locally
+                        created article gets "Just now", which is honest
+                        (we do know it was created this session). */}
+                    <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
+                      {post.isLocal ? "Just now" : "—"}
+                    </td>
                     <td className="py-3 pr-4">
                       <Dropdown
                         triggerLabel={`Actions for "${post.title}"`}
@@ -242,7 +273,7 @@ export default function ArticlesList({ page }) {
                   />
                 </div>
                 <p className="mt-1 text-caption-1 tracking-caption-1 text-neutral-fg2">
-                  User #{post.userId}
+                  {post.isLocal ? "You" : `User #${post.userId}`}
                 </p>
                 <p className="mt-2 text-body-2 tracking-body-2 text-neutral-fg2">
                   {getExcerpt(post.body)}

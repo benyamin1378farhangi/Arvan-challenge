@@ -177,22 +177,46 @@ data (verified directly for each, see below). Naively calling
 that brings back the exact same list, making a delete look like it didn't
 work and an edit look like it didn't save.
 
-Instead, `useDeleteArticle`/`useUpdateArticle` record what actually
-happened — a deleted id, or a post's new fields — into a small
-session-only cache entry (`queryKeys.articles.localOverrides`, read via
-`useArticleOverrides`) that's completely separate from the real articles
-list query. `ArticlesList` applies it on top of whatever the list query
-returns, every render, so a deleted row disappears immediately and an
-edited row shows its new title/body/tags immediately — regardless of how
-many times the underlying list gets refetched or re-hydrated from the
-server in the background.
+Instead, `useCreateArticle`/`useUpdateArticle`/`useDeleteArticle` record
+what actually happened — a new local post, a post's new fields, or a
+deleted id — into a small session-only cache entry
+(`queryKeys.articles.localOverrides`, read via `useArticleOverrides`,
+written via the `record*Article` functions in the same file) that's
+completely separate from the real articles list query. `ArticlesList`
+applies it on top of whatever the list query returns, every render, so a
+created row appears, a deleted row disappears, and an edited row shows its
+new title/body/tags immediately — regardless of how many times the
+underlying list gets refetched or re-hydrated from the server in the
+background.
+
+**Locally created articles** get a negative, client-generated id instead
+of trusting DummyJSON's response: `POST /posts/add` always returns the
+same id (`total + 1`, and `total` never actually changes), so every create
+in a session would otherwise collide on the identical id. The negative id
+also doubles as the `isLocal` signal used to adjust the UI honestly for a
+post that was never really persisted:
+- **Author** shows "You" instead of `User #{id}` (DummyJSON never gave it
+  a real `userId`, but we do know who just created it).
+- **Created** shows "Just now" instead of "—" (DummyJSON has no date
+  field at all, but this one has a real, known creation moment — right
+  now, this session).
+- **New articles are prepended to page 1, newest first.** This is the
+  only sense in which "sort by creation date" can be implemented
+  honestly — DummyJSON's own ~251 seed posts have no date field to sort
+  by at all, so their relative order is left exactly as the API returns
+  it, and no timestamp is fabricated for them.
+- **Edit is hidden** for a locally created row — the Edit page fetches
+  the article server-side by id from DummyJSON, which has no record of a
+  negative, made-up id and would 404. Delete still works, but is handled
+  entirely client-side (removes it from the override instead of calling
+  `DELETE` on an id DummyJSON never had).
 
 This is deliberately not written to `localStorage` or anything else
 durable: it's exactly as long-lived as the mutation "succeeded" on
 DummyJSON — gone on a hard refresh, which is the honest behavior given the
 mock backend never really remembered it either. `total`/page count are
 left alone (still DummyJSON's real numbers) since there's no honest way to
-adjust them for a deletion the backend doesn't actually know about.
+adjust them for changes the backend doesn't actually know about.
 
 ## Create Article
 
@@ -231,9 +255,10 @@ returns a real `201` with an echoed post (`id`, `title`, `body`, `tags`),
 but nothing is actually stored: a `GET` for that same id immediately
 afterward 404s, and the articles list's `total` count never changes.
 Verified directly against the live API before and after creating a test
-article. The UI reflects this honestly — Create shows success (the request
-genuinely succeeded), but the new article does not appear in the Dashboard
-list after redirecting, because DummyJSON never kept it.
+article. DummyJSON itself never keeps it — the article still shows up at
+the top of the Dashboard list after redirecting, but only because of the
+client-side Local Overrides mechanism (above), not because the backend
+actually stored anything.
 
 ## Edit Article
 
@@ -351,3 +376,9 @@ how, despite this.
   refresh. The `useSearchParams()`/`key`-remount fixes here follow
   documented React/Next.js behavior for exactly this scenario, but a real
   browser is needed to watch the click-through happen.
+- **Same limitation applies to Local Overrides** (a created article
+  appearing at the top of the list, an edited row showing new fields, a
+  deleted row disappearing) — verified that the underlying cache-write
+  functions are correct and that every mutation API call still succeeds,
+  but the actual "create an article, land back on /articles, see it at the
+  top" click-through needs a real browser to observe directly.

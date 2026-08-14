@@ -33,6 +33,35 @@ const SUCCESS_TOAST_MESSAGES = {
 // not a measured value.
 const SUCCESS_TOAST_DURATION_MS = 4000;
 
+// A separate component, mounted fresh via `key` each time the triggering
+// query param changes (see the call site) — not local state synced from a
+// prop via an effect. Delete redirects to this exact same route
+// (/articles), just with a different ?deleted=1, so ArticlesList itself
+// stays mounted and only re-renders with new props instead of remounting;
+// syncing local state from a prop change in an effect is exactly the
+// pattern React's own rules (and this project's ESLint config) flag as an
+// anti-pattern. Remounting this small component via `key` sidesteps that
+// entirely — its own `useState(true)` + timeout only ever run once per
+// mount, no derived-state sync needed. Create/Edit happened to already
+// work before this existed because they redirect here *from* a different
+// route, which remounts everything.
+function SuccessToast({ type }) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(false), SUCCESS_TOAST_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <div className="fixed inset-x-0 top-6 z-50 flex justify-center px-4">
+      <Toast variant="success" title="Well done!" description={SUCCESS_TOAST_MESSAGES[type]} />
+    </div>
+  );
+}
+
 export default function ArticlesList({
   page,
   createdSuccess = false,
@@ -44,21 +73,13 @@ export default function ArticlesList({
   const [deleteTarget, setDeleteTarget] = useState(null);
   const deleteArticleMutation = useDeleteArticle();
 
-  // Derived once from the URL-driven props at mount, then owned locally so
-  // it can be dismissed — either automatically (below) or, implicitly, by
-  // the user navigating away.
-  const [successToast, setSuccessToast] = useState(() => {
-    if (createdSuccess) return "created";
-    if (updatedSuccess) return "updated";
-    if (deletedSuccess) return "deleted";
-    return null;
-  });
-
-  useEffect(() => {
-    if (!successToast) return;
-    const timer = setTimeout(() => setSuccessToast(null), SUCCESS_TOAST_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, [successToast]);
+  const successToastType = createdSuccess
+    ? "created"
+    : updatedSuccess
+      ? "updated"
+      : deletedSuccess
+        ? "deleted"
+        : null;
 
   const totalPages = data ? Math.ceil(data.total / ARTICLES_PAGE_SIZE) : 0;
 
@@ -93,18 +114,14 @@ export default function ArticlesList({
 
   return (
     <Section className="p-6">
-      {/* Fixed to the top of the viewport (matches the Figma "Dashboard ->
-          Article updated" reference — centered on the page, not inline in
-          the card) and auto-dismisses itself via the effect above. */}
-      {successToast && (
-        <div className="fixed inset-x-0 top-6 z-50 flex justify-center px-4">
-          <Toast
-            variant="success"
-            title="Well done!"
-            description={SUCCESS_TOAST_MESSAGES[successToast]}
-          />
-        </div>
-      )}
+      {/* key={successToastType} mounts a fresh SuccessToast whenever the
+          type changes, which is what actually fixes the bug this replaced
+          (see the component's own comment). Known gap: two deletes in a
+          row both redirect to the literal same "?deleted=1" URL, so a
+          second delete within the first toast's 4s window reuses the same
+          key/instance rather than resetting its timer — not addressed, a
+          low-probability edge case not worth a nonce-based key for. */}
+      {successToastType && <SuccessToast key={successToastType} type={successToastType} />}
 
       <div className="mb-4 border-b border-neutral-st3 pb-4">
         <h1 className="text-title-3 tracking-title-3 font-semibold text-neutral-fg1">

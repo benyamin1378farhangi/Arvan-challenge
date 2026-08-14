@@ -41,6 +41,14 @@ export default function ArticlesList({
   };
 
   const handleConfirmDelete = () => {
+    // Defensive: onConfirm is wired directly to the Modal's Confirm
+    // button, and nothing at the type/runtime level actually guarantees
+    // deleteTarget is still set by the time this fires (e.g. a rapid
+    // double-click before the button's disabled/isConfirming state
+    // re-renders). Without this, that race throws trying to read `.id`
+    // off null instead of just being a no-op.
+    if (!deleteTarget) return;
+
     deleteArticleMutation.mutate(deleteTarget.id, {
       onSuccess: () => {
         setDeleteTarget(null);

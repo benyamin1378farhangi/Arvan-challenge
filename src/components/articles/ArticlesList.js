@@ -231,7 +231,11 @@ export default function ArticlesList({
             ))}
           </div>
 
-          <div className="mt-4 flex justify-center">
+          {/* Bottom-right of the card, not centered — confirmed against the
+              Figma "Dashboard -> Article updated" reference (the
+              pagination control's center sits well right of the card's
+              center, roughly flush with the table's right edge). */}
+          <div className="mt-4 flex justify-end">
             <Pagination
               currentPage={page}
               totalPages={totalPages}

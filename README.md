@@ -12,6 +12,57 @@ cp .env.example .env.local
 npm run dev
 ```
 
+## Responsive
+
+Figma has no mobile or tablet screens at all — every one of its 11 frames
+is 1440px wide, and the challenge brief says explicitly that a mobile
+version wasn't designed. Every decision below is an implementation choice,
+not something read off a design.
+
+**Breakpoints.** Tailwind's defaults, unchanged (`sm` 640 / `md` 768 / `lg`
+1024 / `xl` 1280) — no custom breakpoint was added. Tablet (768–1023px)
+intentionally gets the same treatment as mobile (drawer sidebar, stacked
+form, card list) rather than an in-between layout: at 768px wide, a fixed
+240px sidebar plus real content is still cramped, so there was no reason
+to design a third state.
+
+**Sidebar** is a fixed-position, off-canvas drawer below `lg` (closed by
+default, opened by the Header's hamburger, closed by its own backdrop or
+by picking a nav item) and exactly the original always-visible static
+sidebar at `lg` and up — same markup, same `isActive` logic, Tailwind
+classes just resolve differently per breakpoint. No new component; the
+drawer is `open`/`onNavigate` props added to the existing `Sidebar`.
+
+**Header** drops the "Arvancloud Challenge" pill entirely below `lg` (pure
+decoration, not information), truncates a long username instead of
+squeezing Logout off-screen, and gains a hamburger button using the
+existing `Button` (`layout="icon"`) — not a new component.
+
+**Articles list.** >=`md`: the original table, now wrapped in
+`overflow-x-auto` as a safety fallback. <`md`: a card per article (Title,
+Author, Excerpt, Tags, Actions — Created is dropped since it only ever
+shows "—" anyway, and the `#` id has no reader-facing meaning). Both live
+in the same `ArticlesList.js`, sharing one `getActionItems()` helper for
+the Edit/Delete `Dropdown` so that wiring only exists once. No new
+component — the JSX for two layouts of the same data didn't get
+unmanageable enough to justify splitting out.
+
+**Create/Edit Article form.** The two-column layout (form + Tags panel)
+holds at `lg`+; below that it's a single column, full-width, form fields
+above Tags — same DOM order, so tab order doesn't change, just
+`flex-direction`. The old fixed `w-[376px]` on the Tags column (which by
+itself exceeded a phone's viewport width) is now `lg:w-[376px]`.
+
+**Pagination.** Below `sm`, the full numbered nav (which doesn't reliably
+fit that narrow) is replaced by a compact "Prev / current of total / Next"
+nav; `sm` and up keeps the original. Both are rendered and Tailwind's `sm:`
+classes pick one — no JS media-query logic.
+
+**Modal, Toast, and the Auth pages (`/login`, `/register`) needed no
+changes** — an audit before implementing found they were already
+mobile-safe from how they were originally built (`w-full max-w-[...]` on
+the card/dialog plus outer `p-4`), not something added for this phase.
+
 ## Authentication
 
 Demo credentials (DummyJSON's test account):
@@ -244,3 +295,8 @@ returns only `{ success: true, id }`, since nothing else about the
   project has no browser automation (e.g. Playwright) set up, so anything
   that only manifests through actual user interaction in a running browser
   has been verified by reading the code, not by observing it run.
+- **Actual rendered appearance at 375/768/1024/1440px, and opening/closing
+  the mobile Sidebar drawer, are code-reviewed only, for the same reason**
+  — confirmed that the right Tailwind classes are present and compiled
+  (`lg:hidden`, `md:block`, the drawer's `-translate-x-full`, etc.), not
+  that they look correct in an actual viewport.

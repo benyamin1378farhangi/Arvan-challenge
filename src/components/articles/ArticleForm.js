@@ -32,8 +32,12 @@ export default function ArticleForm({
   } = useForm({ resolver: zodResolver(articleSchema), defaultValues });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex items-start gap-6">
-      <Section className="flex flex-1 flex-col gap-4 p-6">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
+      className="flex flex-col items-stretch gap-6 lg:flex-row lg:items-start"
+    >
+      <Section className="flex w-full flex-col gap-4 p-6 lg:flex-1">
         <h1 className="text-title-3 tracking-title-3 font-semibold text-neutral-fg1">
           {heading}
         </h1>
@@ -67,7 +71,7 @@ export default function ArticleForm({
         </Button>
       </Section>
 
-      <Section className="w-[376px] shrink-0 p-6">
+      <Section className="w-full p-6 lg:w-[376px] lg:shrink-0">
         <Controller
           name="tags"
           control={control}

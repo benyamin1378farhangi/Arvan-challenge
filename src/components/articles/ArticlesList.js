@@ -49,6 +49,13 @@ export default function ArticlesList({
     });
   };
 
+  // Shared by both the >=md table row and the <md card (Phase 9) so the
+  // Edit/Delete wiring only exists once.
+  const getActionItems = (post) => [
+    { label: "Edit", onClick: () => router.push(ROUTES.editArticle(post.id)) },
+    { label: "Delete", danger: true, onClick: () => setDeleteTarget(post) },
+  ];
+
   return (
     <Section className="p-6">
       <div className="mb-4 border-b border-neutral-st3 pb-4">
@@ -117,64 +124,94 @@ export default function ArticlesList({
 
       {!isLoading && !isError && data && data.posts.length > 0 && (
         <>
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-neutral-st3 text-caption-1 tracking-caption-1 text-neutral-fg2">
-                <th className="py-2 pr-4 font-normal">#</th>
-                <th className="py-2 pr-4 font-normal">Title</th>
-                <th className="py-2 pr-4 font-normal">Author</th>
-                <th className="py-2 pr-4 font-normal">Tags</th>
-                <th className="py-2 pr-4 font-normal">Excerpt</th>
-                <th className="py-2 pr-4 font-normal">Created</th>
-                <th className="py-2 pr-4 font-normal">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.posts.map((post) => (
-                <tr key={post.id} className="border-b border-neutral-st3">
-                  <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg1">
-                    {post.id}
-                  </td>
-                  <td className="py-3 pr-4 text-body-2 tracking-body-2 font-semibold text-neutral-fg1">
-                    {post.title}
-                  </td>
-                  {/* DummyJSON posts only carry a numeric userId, not a
-                      username — resolving it to a real name would mean an
-                      extra request per row (see Phase 5 plan). */}
-                  <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
-                    User #{post.userId}
-                  </td>
-                  <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
-                    {post.tags.join(", ")}
-                  </td>
-                  <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
-                    {getExcerpt(post.body)}
-                  </td>
-                  {/* DummyJSON posts have no date field at all — shown as
-                      "—" rather than a fabricated timestamp. */}
-                  <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">—</td>
-                  <td className="py-3 pr-4">
-                    <Dropdown
-                      triggerLabel={`Actions for "${post.title}"`}
-                      items={[
-                        {
-                          label: "Edit",
-                          onClick: () => router.push(ROUTES.editArticle(post.id)),
-                        },
-                        {
-                          label: "Delete",
-                          danger: true,
-                          onClick: () => setDeleteTarget(post),
-                        },
-                      ]}
-                    />
-                  </td>
+          {/* >=md: the original table, now inside an overflow-x-auto
+              wrapper as a safety fallback (Phase 9) — below md it's
+              replaced entirely by the card list, this is a fallback for
+              content wider than expected at md/lg, not the primary mobile
+              treatment. */}
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-neutral-st3 text-caption-1 tracking-caption-1 text-neutral-fg2">
+                  <th className="py-2 pr-4 font-normal">#</th>
+                  <th className="py-2 pr-4 font-normal">Title</th>
+                  <th className="py-2 pr-4 font-normal">Author</th>
+                  <th className="py-2 pr-4 font-normal">Tags</th>
+                  <th className="py-2 pr-4 font-normal">Excerpt</th>
+                  <th className="py-2 pr-4 font-normal">Created</th>
+                  <th className="py-2 pr-4 font-normal">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.posts.map((post) => (
+                  <tr key={post.id} className="border-b border-neutral-st3">
+                    <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg1">
+                      {post.id}
+                    </td>
+                    <td className="py-3 pr-4 text-body-2 tracking-body-2 font-semibold text-neutral-fg1">
+                      {post.title}
+                    </td>
+                    {/* DummyJSON posts only carry a numeric userId, not a
+                        username — resolving it to a real name would mean an
+                        extra request per row (see Phase 5 plan). */}
+                    <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
+                      User #{post.userId}
+                    </td>
+                    <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
+                      {post.tags.join(", ")}
+                    </td>
+                    <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
+                      {getExcerpt(post.body)}
+                    </td>
+                    {/* DummyJSON posts have no date field at all — shown as
+                        "—" rather than a fabricated timestamp. */}
+                    <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">—</td>
+                    <td className="py-3 pr-4">
+                      <Dropdown
+                        triggerLabel={`Actions for "${post.title}"`}
+                        items={getActionItems(post)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* <md: Card/List layout (Phase 9) — Figma has no mobile design
+              for this table, so this is an implementation decision, not a
+              Figma-derived layout. Same fields minus Created (already just
+              "—" — not worth the vertical space on a small screen) and #
+              (the id has no real meaning to a reader; Title is the primary
+              identifier here). */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {data.posts.map((post) => (
+              <div key={post.id} className="rounded-lg border border-neutral-st3 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-body-2 tracking-body-2 font-semibold text-neutral-fg1">
+                    {post.title}
+                  </p>
+                  <Dropdown
+                    triggerLabel={`Actions for "${post.title}"`}
+                    items={getActionItems(post)}
+                  />
+                </div>
+                <p className="mt-1 text-caption-1 tracking-caption-1 text-neutral-fg2">
+                  User #{post.userId}
+                </p>
+                <p className="mt-2 text-body-2 tracking-body-2 text-neutral-fg2">
+                  {getExcerpt(post.body)}
+                </p>
+                {post.tags.length > 0 && (
+                  <p className="mt-2 text-caption-1 tracking-caption-1 text-neutral-fg2">
+                    {post.tags.join(", ")}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
 
           <div className="mt-4">
             <Pagination

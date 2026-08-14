@@ -10,6 +10,7 @@ import Pagination from "@/components/ui/Pagination";
 import Button from "@/components/ui/Button";
 import Toast from "@/components/ui/Toast";
 import { useArticles } from "@/hooks/useArticles";
+import { useDeleteArticle } from "@/hooks/useDeleteArticle";
 import { ROUTES } from "@/constants/routes";
 import { ARTICLES_PAGE_SIZE } from "@/constants/pagination";
 
@@ -21,12 +22,32 @@ function getExcerpt(body) {
   return words.length > 20 ? `${words.slice(0, 20).join(" ")}…` : body;
 }
 
-export default function ArticlesList({ page, createdSuccess = false, updatedSuccess = false }) {
+export default function ArticlesList({
+  page,
+  createdSuccess = false,
+  updatedSuccess = false,
+  deletedSuccess = false,
+}) {
   const router = useRouter();
   const { data, isLoading, isError, refetch } = useArticles(page);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const deleteArticleMutation = useDeleteArticle();
 
   const totalPages = data ? Math.ceil(data.total / ARTICLES_PAGE_SIZE) : 0;
+
+  const closeDeleteModal = () => {
+    setDeleteTarget(null);
+    deleteArticleMutation.reset();
+  };
+
+  const handleConfirmDelete = () => {
+    deleteArticleMutation.mutate(deleteTarget.id, {
+      onSuccess: () => {
+        setDeleteTarget(null);
+        router.push(`${ROUTES.articles}?deleted=1`);
+      },
+    });
+  };
 
   return (
     <Section className="p-6">
@@ -52,6 +73,16 @@ export default function ArticlesList({ page, createdSuccess = false, updatedSucc
             variant="success"
             title="Well done!"
             description="Article updated successfully"
+          />
+        </div>
+      )}
+
+      {deletedSuccess && (
+        <div className="mb-4">
+          <Toast
+            variant="success"
+            title="Well done!"
+            description="Article deleted successfully"
           />
         </div>
       )}
@@ -157,17 +188,26 @@ export default function ArticlesList({ page, createdSuccess = false, updatedSucc
         </>
       )}
 
-      {/* Confirm/Cancel are fully wired; the actual DELETE request and its
-          success/error Toast are Phase 8 scope. */}
+      {deleteArticleMutation.isError && (
+        <div className="mt-4">
+          <Toast
+            variant="error"
+            title="Couldn't delete article"
+            description={deleteArticleMutation.error.message}
+          />
+        </div>
+      )}
+
       <Modal
         open={Boolean(deleteTarget)}
-        onClose={() => setDeleteTarget(null)}
+        onClose={closeDeleteModal}
         title="Delete Article"
         danger
         message="Are you sure you want to delete this article?"
         confirmLabel="Delete"
         cancelLabel="Cancel"
-        onConfirm={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isConfirming={deleteArticleMutation.isPending}
       />
     </Section>
   );

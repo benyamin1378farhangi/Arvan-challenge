@@ -191,6 +191,33 @@ after still shows the untouched original (verified directly). The edit
 "succeeds" honestly from the API's point of view; DummyJSON just never
 keeps it.
 
+## Delete Article
+
+**Flow.** The row menu's Delete opens the existing confirmation `Modal`
+(unchanged since Phase 3/5 — its `isConfirming` prop already disabled
+Confirm and showed a loading spinner, so nothing new was needed there).
+Confirm now runs `useDeleteArticle` → `DELETE /api/articles/{id}` →
+DummyJSON → invalidate the articles cache → close the modal → redirect to
+`/articles?deleted=1` → success Toast on the Dashboard, same shape as
+Create/Edit. Cancel closes the modal and resets the mutation's error state
+(so a failed delete doesn't leave a stale error Toast showing the next time
+the modal opens for a different article). A failed delete keeps the modal
+open and shows an error Toast in the Dashboard instead of navigating away.
+
+**Authorization.** DummyJSON's `DELETE /posts/:id` doesn't check
+authorization at all — verified, no `Authorization` header was needed for
+it to succeed. `/api/articles/[id]`'s `DELETE` handler is the only access
+control this operation has: it 401s without our own session cookie present,
+independent of whatever DummyJSON itself would or wouldn't allow.
+
+**Persistence.** Same limitation as Create/Edit: DummyJSON returns a real
+`200` with `isDeleted: true` and a `deletedOn` timestamp in its response,
+but a `GET` for that id immediately after still returns the original,
+un-deleted post (verified directly). `/api/articles/[id]`'s `DELETE`
+handler doesn't forward any of that DummyJSON response to the client — it
+returns only `{ success: true, id }`, since nothing else about the
+(never-actually-deleted) record is meaningful to show.
+
 ## Known Limitations / Future Improvements
 
 - **No refresh-token rotation.** DummyJSON's access token expires after 60
@@ -202,15 +229,18 @@ keeps it.
 - **Yekan Bakh VF (Persian typography) isn't wired up.** No fallback font
   was substituted for it; Persian text, if any is added later, will render
   in the browser's default font until the real font file is available.
-- **Delete doesn't call the API yet** (see Dashboard / Articles above) —
-  the mutation and its Toast feedback are separate scope.
 - **Article author is shown as `User #{id}`, not a real username** —
   DummyJSON posts don't include one, and resolving it would mean an extra
   request per table row.
-- **Create/Edit don't actually persist changes** (see Create Article / Edit
-  Article above) — a DummyJSON limitation, not an app bug; documented so
-  it isn't mistaken for one.
+- **Create/Edit/Delete don't actually persist changes** (see Create
+  Article / Edit Article / Delete Article above) — a DummyJSON limitation,
+  not an app bug; documented so it isn't mistaken for one.
 - **The Tags panel briefly shows "Loading tags…" on first paint** of the
   Create page — unlike the articles list, this query isn't server-prefetched.
   A secondary panel's brief loading state was judged not worth the same
   SSR-prefetch treatment given to the primary Dashboard list.
+- **Real browser interactions (clicks, keyboard navigation, focus order,
+  loading-state flashes) are code-reviewed, not browser-tested** — this
+  project has no browser automation (e.g. Playwright) set up, so anything
+  that only manifests through actual user interaction in a running browser
+  has been verified by reading the code, not by observing it run.

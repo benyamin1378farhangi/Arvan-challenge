@@ -17,3 +17,7 @@ export function updateArticle({ id, title, body, tags }) {
     body: JSON.stringify({ title, body, tags }),
   });
 }
+
+export function deleteArticle(id) {
+  return sameOriginFetch(`/api/articles/${id}`, { method: "DELETE" });
+}

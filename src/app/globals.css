@@ -48,6 +48,9 @@
   --color-error-hover: #ab181a;
   --color-error-press: #801213;
   --color-error-disabled: #efa5a6;
+  /* Sampled directly from the Sign-in → Failed reference screenshot's
+     Toast pill (pixel-measured, not guessed): rgb(250,228,228). */
+  --color-error-soft: #fae4e4;
 
   /* Colors — success */
   --color-success-bg: #e3f6e9;

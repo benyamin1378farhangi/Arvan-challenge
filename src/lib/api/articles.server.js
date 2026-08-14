@@ -10,3 +10,10 @@ export function fetchArticlesPage(page) {
   const skip = (page - 1) * ARTICLES_PAGE_SIZE;
   return apiFetch(`/posts?limit=${ARTICLES_PAGE_SIZE}&skip=${skip}`);
 }
+
+// Used directly by the Edit Server Component (not through our own
+// /api/articles Route Handler — there's no client-side consumer for a
+// single article, so that route was never built; see Phase 7 plan).
+export function fetchArticleById(id) {
+  return apiFetch(`/posts/${id}`);
+}

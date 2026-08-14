@@ -21,7 +21,7 @@ function getExcerpt(body) {
   return words.length > 20 ? `${words.slice(0, 20).join(" ")}…` : body;
 }
 
-export default function ArticlesList({ page, createdSuccess = false }) {
+export default function ArticlesList({ page, createdSuccess = false, updatedSuccess = false }) {
   const router = useRouter();
   const { data, isLoading, isError, refetch } = useArticles(page);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -42,6 +42,16 @@ export default function ArticlesList({ page, createdSuccess = false }) {
             variant="success"
             title="Well done!"
             description="Article created successfully"
+          />
+        </div>
+      )}
+
+      {updatedSuccess && (
+        <div className="mb-4">
+          <Toast
+            variant="success"
+            title="Well done!"
+            description="Article updated successfully"
           />
         </div>
       )}

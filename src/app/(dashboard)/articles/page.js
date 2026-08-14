@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function ArticlesPage({ searchParams }) {
   const params = await searchParams;
   const createdSuccess = params?.created === "1";
+  const updatedSuccess = params?.updated === "1";
 
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery({
@@ -22,7 +23,7 @@ export default async function ArticlesPage({ searchParams }) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ArticlesList page={1} createdSuccess={createdSuccess} />
+      <ArticlesList page={1} createdSuccess={createdSuccess} updatedSuccess={updatedSuccess} />
     </HydrationBoundary>
   );
 }

@@ -148,6 +148,49 @@ article. The UI reflects this honestly — Create shows success (the request
 genuinely succeeded), but the new article does not appear in the Dashboard
 list after redirecting, because DummyJSON never kept it.
 
+## Edit Article
+
+**Flow.** `app/(dashboard)/articles/edit/[slug]/page.js` (Server Component)
+fetches the article directly via `fetchArticleById` (the same server-only
+module Create/Dashboard use — not through `/api/articles`, since nothing
+client-side needs to fetch a single article) and passes it straight into
+`ArticleForm` as `defaultValues`. On submit: `useUpdateArticle` →
+`PUT /api/articles/{id}` → DummyJSON → invalidate the articles cache →
+redirect to `/articles?updated=1` → success Toast on the Dashboard, mirroring
+Create's `?created=1`.
+
+**Why no client-side query for the article being edited.** React Hook
+Form only reads `defaultValues` once, at mount — if the article arrived
+async via TanStack Query, a `reset()` call would be needed once it loaded.
+Fetching it server-side and passing it as a prop sidesteps that entirely:
+by the time the Client Component mounts, the data is already there. There
+is also no caching/background-refetch value for a form you fill in once
+and leave.
+
+**`userId` isn't re-derived on update.** Unlike Create, `PUT /posts/:id`
+doesn't require (or accept a way to change) `userId` — DummyJSON already
+knows the original record's owner and preserves it automatically
+(verified). The PUT handler only checks that our session cookie exists;
+it has no reason to call `/auth/me` here.
+
+**Description starts empty, always** — even though the article already has
+a `body`. There's no way to know which part (if any) of an *existing*
+post's body was ever meant to be a "description"; guessing by splitting
+the text isn't attempted. If the user types something in Description while
+editing, it's folded into `body` the same way Create does
+(`description + "\n\n" + body`).
+
+**Invalid / missing article.** A non-numeric slug or an id DummyJSON
+doesn't have (`404 "Post with id '...' not found"`, verified) both render
+Next's default not-found page via `notFound()` — Figma has no dedicated
+screen for this state, so nothing was designed for it here either.
+
+**Persistence.** Same limitation as Create: `PUT /posts/:id` returns a real
+`200` with the edited fields echoed back, but a `GET` for that id right
+after still shows the untouched original (verified directly). The edit
+"succeeds" honestly from the API's point of view; DummyJSON just never
+keeps it.
+
 ## Known Limitations / Future Improvements
 
 - **No refresh-token rotation.** DummyJSON's access token expires after 60
@@ -164,9 +207,9 @@ list after redirecting, because DummyJSON never kept it.
 - **Article author is shown as `User #{id}`, not a real username** —
   DummyJSON posts don't include one, and resolving it would mean an extra
   request per table row.
-- **Create doesn't actually persist new articles** (see Create Article
-  above) — a DummyJSON limitation, not an app bug; documented so it isn't
-  mistaken for one.
+- **Create/Edit don't actually persist changes** (see Create Article / Edit
+  Article above) — a DummyJSON limitation, not an app bug; documented so
+  it isn't mistaken for one.
 - **The Tags panel briefly shows "Loading tags…" on first paint** of the
   Create page — unlike the articles list, this query isn't server-prefetched.
   A secondary panel's brief loading state was judged not worth the same

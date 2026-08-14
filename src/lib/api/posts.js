@@ -10,3 +10,10 @@ export function createArticle({ title, body, tags }) {
     body: JSON.stringify({ title, body, tags }),
   });
 }
+
+export function updateArticle({ id, title, body, tags }) {
+  return sameOriginFetch(`/api/articles/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ title, body, tags }),
+  });
+}

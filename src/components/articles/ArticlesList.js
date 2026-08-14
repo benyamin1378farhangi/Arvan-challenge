@@ -8,6 +8,7 @@ import Dropdown from "@/components/ui/Dropdown";
 import Modal from "@/components/ui/Modal";
 import Pagination from "@/components/ui/Pagination";
 import Button from "@/components/ui/Button";
+import Toast from "@/components/ui/Toast";
 import { useArticles } from "@/hooks/useArticles";
 import { ROUTES } from "@/constants/routes";
 import { ARTICLES_PAGE_SIZE } from "@/constants/pagination";
@@ -20,7 +21,7 @@ function getExcerpt(body) {
   return words.length > 20 ? `${words.slice(0, 20).join(" ")}…` : body;
 }
 
-export default function ArticlesList({ page }) {
+export default function ArticlesList({ page, createdSuccess = false }) {
   const router = useRouter();
   const { data, isLoading, isError, refetch } = useArticles(page);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -34,6 +35,16 @@ export default function ArticlesList({ page }) {
           All Posts
         </h1>
       </div>
+
+      {createdSuccess && (
+        <div className="mb-4">
+          <Toast
+            variant="success"
+            title="Well done!"
+            description="Article created successfully"
+          />
+        </div>
+      )}
 
       {isLoading && (
         <p className="py-12 text-center text-body-2 tracking-body-2 text-neutral-fg2">

@@ -107,6 +107,47 @@ action opens the confirmation modal, and Cancel/Confirm both close it, but
 Confirm doesn't call the DELETE endpoint yet — that (plus the
 success/error Toast) is separate scope.
 
+## Create Article
+
+**Flow.** Client (React Hook Form + Zod) → `useCreateArticle` (TanStack
+Query mutation) → `POST /api/articles` → DummyJSON. On success: the
+articles query cache is invalidated and the user is redirected to
+`/articles?created=1`, which shows the success Toast on the Dashboard
+(same pattern as Sign-up's redirect to `/login`) rather than on the Create
+page itself — matching Figma, which has a distinct "Dashboard → Article
+created" screen, not a Toast on the form.
+
+**`userId` is derived server-side, never trusted from the client.**
+DummyJSON's `POST /posts/add` requires a `userId` (verified — without it,
+`400 "User id is required"`), but there's no such field in Figma's form;
+it's not something the user fills in. `/api/articles`'s POST handler calls
+DummyJSON's `/auth/me` with the session's own token (the same call
+`/api/auth/me` makes) to get the real logged-in user's id and uses that —
+a `userId` sent in the request body is ignored entirely, it's never read.
+
+**Description has no home in DummyJSON's schema.** A post is only
+`{ title, body, tags, userId }` — sending a `description` field is
+silently dropped (verified). The Description field stays in the UI
+(Figma has it), but its value is folded into `body` before submitting
+(`description + "\n\n" + body`) so it actually affects the created
+article instead of being entered and quietly discarded.
+
+**Tags.** The panel's list comes from `GET /posts/tags` (via our own
+`/api/tags`, sorted alphabetically by name — DummyJSON doesn't sort it).
+The single search input both filters that list and, on Enter, adds a new
+tag (slugified, auto-checked) if nothing matches — new tags are
+client-side only for the lifetime of the form; DummyJSON has no endpoint
+that would persist a new tag either.
+
+**Persistence — same limitation as Login/Register.** `POST /posts/add`
+returns a real `201` with an echoed post (`id`, `title`, `body`, `tags`),
+but nothing is actually stored: a `GET` for that same id immediately
+afterward 404s, and the articles list's `total` count never changes.
+Verified directly against the live API before and after creating a test
+article. The UI reflects this honestly — Create shows success (the request
+genuinely succeeded), but the new article does not appear in the Dashboard
+list after redirecting, because DummyJSON never kept it.
+
 ## Known Limitations / Future Improvements
 
 - **No refresh-token rotation.** DummyJSON's access token expires after 60
@@ -123,3 +164,10 @@ success/error Toast) is separate scope.
 - **Article author is shown as `User #{id}`, not a real username** —
   DummyJSON posts don't include one, and resolving it would mean an extra
   request per table row.
+- **Create doesn't actually persist new articles** (see Create Article
+  above) — a DummyJSON limitation, not an app bug; documented so it isn't
+  mistaken for one.
+- **The Tags panel briefly shows "Loading tags…" on first paint** of the
+  Create page — unlike the articles list, this query isn't server-prefetched.
+  A secondary panel's brief loading state was judged not worth the same
+  SSR-prefetch treatment given to the primary Dashboard list.

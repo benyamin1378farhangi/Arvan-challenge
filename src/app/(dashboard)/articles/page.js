@@ -10,7 +10,10 @@ import ArticlesList from "@/components/articles/ArticlesList";
 // other signal that this list needs to be fetched fresh per request.
 export const dynamic = "force-dynamic";
 
-export default async function ArticlesPage() {
+export default async function ArticlesPage({ searchParams }) {
+  const params = await searchParams;
+  const createdSuccess = params?.created === "1";
+
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery({
     queryKey: queryKeys.articles.list(1),
@@ -19,7 +22,7 @@ export default async function ArticlesPage() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ArticlesList page={1} />
+      <ArticlesList page={1} createdSuccess={createdSuccess} />
     </HydrationBoundary>
   );
 }

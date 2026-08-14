@@ -66,6 +66,47 @@ cookie.
   missing token but 500 for an invalid one. `/api/auth/me` normalizes both
   into a single 401.
 
+## Dashboard / Articles
+
+**Data fetching.** `/articles` and `/articles/page/:page` prefetch the
+article list server-side (`queryClient.prefetchQuery` + `HydrationBoundary`)
+so the initial HTML already contains real data instead of a loading flash,
+then `ArticlesList` picks up the same query client-side via `useArticles`
+for pagination/refetching. Both routes are marked `force-dynamic` — this
+list is paginated, live data behind auth, so it has no business being
+baked into the build as static HTML.
+
+**Pagination.** Page 1's canonical URL is `/articles`; later pages are
+`/articles/page/:page`. Visiting `/articles/page/1` redirects to
+`/articles`. A non-numeric or sub-1 page (`/articles/page/abc`,
+`/articles/page/0`) is a 404. A page past the last one isn't treated as an
+error — DummyJSON returns an empty `posts` array for a `skip` beyond
+`total` (verified directly against the live API), which renders as the
+same "No articles yet" empty state as a genuinely empty list.
+
+**Author / Created columns — DummyJSON data limitation.** Figma's table
+has `Author` (`@username`) and `Created` (a date) columns, but a DummyJSON
+post object only has a numeric `userId` — no username, and no date field
+at all:
+
+```json
+{ "id": 1, "title": "...", "body": "...", "tags": [...], "userId": 121 }
+```
+
+- **Author** is shown as `User #{userId}`. Resolving it to a real username
+  would mean an extra `GET /users/:id` request per row (an N+1 pattern) —
+  not worth the added complexity/latency for this challenge.
+- **Created** is shown as `—`. There is no date field to show, and no
+  timestamp is fabricated for it.
+
+**Excerpt** *is* derivable — Figma's own note for that column says "first
+20 words of article body", which is what's shown.
+
+**Delete** is intentionally partial in this phase: the row menu's Delete
+action opens the confirmation modal, and Cancel/Confirm both close it, but
+Confirm doesn't call the DELETE endpoint yet — that (plus the
+success/error Toast) is separate scope.
+
 ## Known Limitations / Future Improvements
 
 - **No refresh-token rotation.** DummyJSON's access token expires after 60
@@ -77,3 +118,8 @@ cookie.
 - **Yekan Bakh VF (Persian typography) isn't wired up.** No fallback font
   was substituted for it; Persian text, if any is added later, will render
   in the browser's default font until the real font file is available.
+- **Delete doesn't call the API yet** (see Dashboard / Articles above) —
+  the mutation and its Toast feedback are separate scope.
+- **Article author is shown as `User #{id}`, not a real username** —
+  DummyJSON posts don't include one, and resolving it would mean an extra
+  request per table row.

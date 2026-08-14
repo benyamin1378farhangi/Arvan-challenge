@@ -1,6 +1,5 @@
-// Header + Sidebar chrome is added in Phase 3 (shared components) and
-// wired up in Phase 5 (Dashboard). Kept as a plain passthrough for now so
-// the route group exists and every /articles/* route resolves.
+import DashboardShell from "@/components/layout/DashboardShell";
+
 export default function DashboardLayout({ children }) {
-  return children;
+  return <DashboardShell>{children}</DashboardShell>;
 }

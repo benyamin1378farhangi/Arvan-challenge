@@ -1,6 +1,113 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens, mapped 1:1 from the Figma variables (values recorded in
+ * the project's Figma analysis). Naming keeps the Figma group/state
+ * structure (e.g. "primary", "primary-hover", "primary-press") instead of
+ * renaming to generic scale names, so a token here can always be traced
+ * back to the exact Figma variable it came from.
+ *
+ * Note on "-hover" / "-press" / "-disabled" suffixes: these are Figma
+ * *state* tokens, not CSS pseudo-classes. They generate plain utility
+ * classes (e.g. `bg-primary-hover`) that components apply conditionally
+ * via Tailwind's `hover:` / `active:` / `disabled:` variants, e.g.
+ * `className="bg-primary hover:bg-primary-hover"`.
+ *
+ * Spacing and border-radius are intentionally NOT overridden here: Tailwind's
+ * default 4px-based spacing scale and its `rounded-lg` (8px) / `rounded-xl`
+ * (12px) already match the values measured in Figma exactly, so introducing
+ * a parallel custom scale would just duplicate what Tailwind ships.
+ */
+@theme {
+  /* Colors — neutral */
+  --color-neutral-fg1: #333333;
+  --color-neutral-fg1-hover: #191919;
+  --color-neutral-fg1-press: #000000;
+  --color-neutral-fg1-disabled: #cccccc;
+  --color-neutral-fg2: #7f7f7f;
+  --color-neutral-fg3: #ffffff;
+
+  --color-neutral-bg1: #ffffff;
+  --color-neutral-bg2: #f0f0f0;
+
+  --color-neutral-st2: #cccccc;
+  --color-neutral-st2-hover: #b3b3b3;
+  --color-neutral-st2-press: #999999;
+  --color-neutral-st2-disabled: #cccccc;
+  --color-neutral-st3: #e6e6e6;
+
+  /* Colors — primary */
+  --color-primary: #009595;
+  --color-primary-hover: #007070;
+  --color-primary-press: #004a4a;
+  --color-primary-disabled: #99e3e3;
+  --color-primary-soft: #e0f7f7;
+
+  /* Colors — error */
+  --color-error: #d61e20;
+  --color-error-hover: #ab181a;
+  --color-error-press: #801213;
+  --color-error-disabled: #efa5a6;
+
+  /* Colors — success */
+  --color-success-bg: #e3f6e9;
+  --color-success-fg: #17b24a;
+
+  /*
+   * Typography — one token pair per Figma text style (font-size + its
+   * paired line-height, using Tailwind v4's `--text-name` /
+   * `--text-name--line-height` convention). "Strong" variants (Body 2
+   * Strong, Caption 1 Strong) reuse the same size/line-height as their
+   * base style and only change font-weight, so they don't get a separate
+   * token — apply `font-semibold` alongside the base style instead, e.g.
+   * `className="text-body-2 tracking-body-2 font-semibold"`.
+   */
+  --text-display-3: 64px;
+  --text-display-3--line-height: 80px;
+  --text-title-3: 18px;
+  --text-title-3--line-height: 24px;
+  --text-body-1: 16px;
+  --text-body-1--line-height: 24px;
+  --text-body-2: 14px;
+  --text-body-2--line-height: 20px;
+  --text-caption-1: 12px;
+  --text-caption-1--line-height: 16px;
+  --text-caption-2: 10px;
+  --text-caption-2--line-height: 12px;
+
+  /*
+   * Letter-spacing. Figma defines this as -2% of font-size for every text
+   * style; that formula was confirmed against the exact px values Figma
+   * returned for Body 2 (14px -> -0.28px), Body 1 (16px -> -0.32px) and
+   * Caption 1 (12px -> -0.24px). The remaining sizes below are the same
+   * formula applied consistently, not independently re-measured.
+   */
+  --tracking-display-3: -1.28px;
+  --tracking-title-3: -0.36px;
+  --tracking-body-1: -0.32px;
+  --tracking-body-2: -0.28px;
+  --tracking-caption-1: -0.24px;
+  --tracking-caption-2: -0.2px;
+
+  /* Shadow — only Toast's shadow was confirmed from Figma. */
+  --shadow-toast: 0px 8px 40px rgba(37, 51, 67, 0.24);
+
+  /* Fonts */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Persian typography (Yekan Bakh VF) is intentionally not wired up yet —
+ * waiting on the real font file from the design team. Once it's available:
+ *   1. Add the font files under public/fonts/ or load them with
+ *      next/font/local in layout.js (same pattern as Inter below).
+ *   2. Add `--font-fa: var(--font-yekan-bakh), ...;` to the @theme block
+ *      above.
+ * No other change is needed — components will simply start using the
+ * `font-fa` utility once it exists.
+ */
+
 body {
-  background: #ffffff;
-  color: #333333;
+  background: var(--color-neutral-bg2);
+  color: var(--color-neutral-fg1);
 }

@@ -1,5 +1,13 @@
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
+
+// Only the two weights the Design Kit actually uses (Regular / Semi Bold).
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  variable: "--font-inter",
+});
 
 export const metadata = {
   title: "Arvancloud Challenge",
@@ -8,8 +16,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col font-sans">
+    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col font-sans bg-neutral-bg2 text-neutral-fg1">
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Section from "@/components/layout/Section";
@@ -22,6 +22,17 @@ function getExcerpt(body) {
   return words.length > 20 ? `${words.slice(0, 20).join(" ")}…` : body;
 }
 
+const SUCCESS_TOAST_MESSAGES = {
+  created: "Article created successfully",
+  updated: "Article updated successfully",
+  deleted: "Article deleted successfully",
+};
+
+// How long the success Toast stays up before auto-dismissing (Figma shows
+// it disappearing on its own, not a duration) — an implementation choice,
+// not a measured value.
+const SUCCESS_TOAST_DURATION_MS = 4000;
+
 export default function ArticlesList({
   page,
   createdSuccess = false,
@@ -32,6 +43,22 @@ export default function ArticlesList({
   const { data, isLoading, isError, refetch } = useArticles(page);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const deleteArticleMutation = useDeleteArticle();
+
+  // Derived once from the URL-driven props at mount, then owned locally so
+  // it can be dismissed — either automatically (below) or, implicitly, by
+  // the user navigating away.
+  const [successToast, setSuccessToast] = useState(() => {
+    if (createdSuccess) return "created";
+    if (updatedSuccess) return "updated";
+    if (deletedSuccess) return "deleted";
+    return null;
+  });
+
+  useEffect(() => {
+    if (!successToast) return;
+    const timer = setTimeout(() => setSuccessToast(null), SUCCESS_TOAST_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [successToast]);
 
   const totalPages = data ? Math.ceil(data.total / ARTICLES_PAGE_SIZE) : 0;
 
@@ -66,41 +93,24 @@ export default function ArticlesList({
 
   return (
     <Section className="p-6">
+      {/* Fixed to the top of the viewport (matches the Figma "Dashboard ->
+          Article updated" reference — centered on the page, not inline in
+          the card) and auto-dismisses itself via the effect above. */}
+      {successToast && (
+        <div className="fixed inset-x-0 top-6 z-50 flex justify-center px-4">
+          <Toast
+            variant="success"
+            title="Well done!"
+            description={SUCCESS_TOAST_MESSAGES[successToast]}
+          />
+        </div>
+      )}
+
       <div className="mb-4 border-b border-neutral-st3 pb-4">
         <h1 className="text-title-3 tracking-title-3 font-semibold text-neutral-fg1">
           All Posts
         </h1>
       </div>
-
-      {createdSuccess && (
-        <div className="mb-4">
-          <Toast
-            variant="success"
-            title="Well done!"
-            description="Article created successfully"
-          />
-        </div>
-      )}
-
-      {updatedSuccess && (
-        <div className="mb-4">
-          <Toast
-            variant="success"
-            title="Well done!"
-            description="Article updated successfully"
-          />
-        </div>
-      )}
-
-      {deletedSuccess && (
-        <div className="mb-4">
-          <Toast
-            variant="success"
-            title="Well done!"
-            description="Article deleted successfully"
-          />
-        </div>
-      )}
 
       {isLoading && (
         <p className="py-12 text-center text-body-2 tracking-body-2 text-neutral-fg2">
@@ -140,14 +150,14 @@ export default function ArticlesList({
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-neutral-st3 text-caption-1 tracking-caption-1 text-neutral-fg2">
-                  <th className="py-2 pr-4 font-normal">#</th>
-                  <th className="py-2 pr-4 font-normal">Title</th>
-                  <th className="py-2 pr-4 font-normal">Author</th>
-                  <th className="py-2 pr-4 font-normal">Tags</th>
-                  <th className="py-2 pr-4 font-normal">Excerpt</th>
-                  <th className="py-2 pr-4 font-normal">Created</th>
-                  <th className="py-2 pr-4 font-normal">
+                <tr className="border-b border-neutral-st3 bg-neutral-bg2 text-body-2 tracking-body-2 font-semibold text-neutral-fg1">
+                  <th className="py-2 pr-4 font-semibold">#</th>
+                  <th className="py-2 pr-4 font-semibold">Title</th>
+                  <th className="py-2 pr-4 font-semibold">Author</th>
+                  <th className="py-2 pr-4 font-semibold">Tags</th>
+                  <th className="py-2 pr-4 font-semibold">Excerpt</th>
+                  <th className="py-2 pr-4 font-semibold">Created</th>
+                  <th className="py-2 pr-4 font-semibold">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
@@ -221,7 +231,7 @@ export default function ArticlesList({
             ))}
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 flex justify-center">
             <Pagination
               currentPage={page}
               totalPages={totalPages}

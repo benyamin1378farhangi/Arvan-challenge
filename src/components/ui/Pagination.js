@@ -11,6 +11,11 @@ function getPageNumbers(current, total) {
   return [...pages].filter((page) => page >= 1 && page <= total).sort((a, b) => a - b);
 }
 
+// The bordered/rounded wrapper (pixel-confirmed from a Figma reference
+// screenshot: a #CCCCCC — i.e. `neutral-st2` — box around the whole
+// control) wraps both nav variants so it's present regardless of which
+// breakpoint is showing.
+//
 // Below `sm` (Phase 9), the full number list doesn't reliably fit — this
 // renders both the full nav and a compact Prev/"n / total"/Next nav, and
 // lets Tailwind's `sm:` breakpoint pick one; there's no JS media-query
@@ -24,7 +29,7 @@ export default function Pagination({ currentPage, totalPages, getHref }) {
   const nextHref = currentPage < totalPages ? getHref(currentPage + 1) : undefined;
 
   return (
-    <>
+    <div className="inline-flex items-center justify-center rounded-xl border border-neutral-st2 p-1">
       <nav aria-label="Pagination" className="hidden items-center justify-center gap-1 sm:flex">
         <PageLink href={previousHref} disabled={currentPage === 1} aria-label="Previous page">
           <ChevronLeftIcon className="size-4" />
@@ -63,7 +68,7 @@ export default function Pagination({ currentPage, totalPages, getHref }) {
           <ChevronRightIcon className="size-4" />
         </PageLink>
       </nav>
-    </>
+    </div>
   );
 }
 

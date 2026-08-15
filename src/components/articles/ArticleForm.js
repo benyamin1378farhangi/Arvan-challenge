@@ -13,9 +13,6 @@ import TagsPanel from "./TagsPanel";
 
 const DEFAULT_VALUES = { title: "", description: "", body: "", tags: [] };
 
-// Shared by Create (Phase 6) and Edit (Phase 7) — same fields, same
-// validation, same layout; only the submit behavior and initial values
-// differ, both of which the parent page controls via props.
 export default function ArticleForm({
   heading = "New article",
   defaultValues = DEFAULT_VALUES,

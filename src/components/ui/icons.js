@@ -1,10 +1,3 @@
-// Hand-built inline icons standing in for the Figma icon set (chevron-left,
-// chevron-right, ellipsis, check-circle, warning) plus a couple of small
-// UI-only icons (check, minus, spinner) that don't come from Figma at all.
-// The Figma icon SVGs themselves weren't exportable via Figma MCP during
-// this phase (rate-limited) — swap these for the exported assets if
-// pixel-perfect icons are required later. All use currentColor so they
-// inherit color from the design tokens applied on their parent.
 
 export function ChevronLeftIcon(props) {
   return (
@@ -41,8 +34,6 @@ export function CheckCircleIcon(props) {
   );
 }
 
-// طبق اسکرین‌شات صفحه‌ی Icons در Design Kit، این آیکون یک مثلث است، نه دایره
-// (اصلاح‌شده — نسخه‌ی قبلی اشتباهاً دایره‌ای بود).
 export function WarningIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -69,9 +60,6 @@ export function MinusIcon(props) {
   );
 }
 
-// Mobile Sidebar drawer trigger (Phase 9) — not from Figma or the Design
-// Kit icon list (Figma has no mobile screens at all), a standard hamburger
-// glyph.
 export function MenuIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" {...props}>

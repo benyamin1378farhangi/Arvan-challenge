@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 
-// No DummyJSON call needed — there's nothing to invalidate server-side on
-// their end for a mock API. Logging out just means clearing our own cookie.
 export async function POST() {
   const response = NextResponse.json({ success: true });
   response.cookies.set(SESSION_COOKIE_NAME, "", {

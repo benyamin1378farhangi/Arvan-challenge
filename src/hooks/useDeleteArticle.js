@@ -9,10 +9,6 @@ export function useDeleteArticle() {
 
   return useMutation({
     mutationFn: deleteArticle,
-    // Not invalidateQueries + refetch — DummyJSON never actually deletes
-    // anything server-side, so refetching would just bring the exact same
-    // row right back. Recording the id as a local override is what
-    // actually makes the row disappear (and stay gone this session).
     onSuccess: (_response, deletedId) => {
       recordDeletedArticle(queryClient, deletedId);
     },

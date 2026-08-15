@@ -2,11 +2,6 @@ import { NextResponse } from "next/server";
 import { apiFetch, ApiError } from "@/lib/api/http";
 import { pickPublicUser } from "@/lib/auth/pickPublicUser";
 
-// DummyJSON has no real registration endpoint — /users/add is documented
-// as a simulated create that never persists, so a user made here can't
-// subsequently log in via /auth/login. This still goes through a real,
-// documented DummyJSON call (not a fabricated one); the client is
-// responsible for not treating the result as a usable account.
 export async function POST(request) {
   const body = await request.json().catch(() => null);
 
@@ -27,9 +22,6 @@ export async function POST(request) {
       }),
     });
 
-    // DummyJSON echoes the submitted password back in the response —
-    // strip it (and everything else we don't need) before this reaches
-    // the client.
     return NextResponse.json({ user: pickPublicUser(created) }, { status: 201 });
   } catch (error) {
     if (error instanceof ApiError) {

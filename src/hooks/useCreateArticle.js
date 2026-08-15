@@ -10,11 +10,6 @@ export function useCreateArticle() {
 
   return useMutation({
     mutationFn: createArticle,
-    // Not invalidateQueries + refetch — DummyJSON never actually stores
-    // the new post, so refetching wouldn't show it either way. Recording
-    // it as a local override (with a real, current-user-aware Author,
-    // unlike anything DummyJSON would tell us for a made-up id) is what
-    // makes it actually appear in the list.
     onSuccess: (response) => {
       const currentUser = queryClient.getQueryData(queryKeys.auth.me);
 

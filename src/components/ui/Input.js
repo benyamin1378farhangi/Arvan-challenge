@@ -1,13 +1,6 @@
 import { forwardRef } from "react";
 import { cx } from "@/utils/cx";
 
-// A single fixed size (40px, matching Design Kit's "Md"). Every input
-// across the Challenge screens (Sign-in, Sign-up, New/Edit article, Tags
-// search) uses this one size — Sm/Lg exist in the Design Kit but nothing
-// in the actual screens uses them, so no `size` prop was added.
-//
-// forwardRef so this composes with React Hook Form's `register()`, which
-// needs a real ref to the <input> element.
 const Input = forwardRef(function Input(
   { error = false, className = "", ...props },
   ref,

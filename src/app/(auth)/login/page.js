@@ -12,6 +12,7 @@ import Field from "@/components/ui/Field";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import Toast from "@/components/ui/Toast";
+import AutoDismissToast from "@/components/ui/AutoDismissToast";
 import { ROUTES } from "@/constants/routes";
 
 function LoginForm() {
@@ -33,11 +34,6 @@ function LoginForm() {
     );
   };
 
-  // The API returns a generic "Invalid credentials" message; the
-  // Figma-specified copy for this exact case ("Username and/or Password is
-  // invalid") is shown instead when that's what actually happened (a 401),
-  // while any other failure (network, 5xx) keeps its own real message
-  // rather than being mislabeled as a credentials problem.
   const loginErrorDescription =
     loginMutation.error?.status === 401
       ? "Username and/or Password is invalid"
@@ -45,9 +41,6 @@ function LoginForm() {
 
   return (
     <>
-      {/* Fixed to the top of the viewport, independent of the card below —
-          matches the Figma "Sign-in -> Failed" reference (the toast sits
-          near the top of the whole page, not inline in the form). */}
       {loginMutation.isError && (
         <div className="fixed inset-x-0 top-6 z-50 flex justify-center px-4">
           <Toast variant="error" title="Sign-in Failed!" description={loginErrorDescription} />
@@ -63,7 +56,7 @@ function LoginForm() {
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4 px-8 py-6">
           {justRegistered && (
-            <Toast
+            <AutoDismissToast
               variant="success"
               title="Account created"
               description="This demo doesn't persist new accounts — sign in with the demo credentials from the README."
@@ -71,9 +64,6 @@ function LoginForm() {
           )}
 
           <Field label="Email" htmlFor="login-email" error={errors.email?.message}>
-            {/* type="text", not "email" — this field's value is sent to
-                DummyJSON as `username`, which isn't email-formatted, so the
-                browser's native email validation would block valid logins. */}
             <Input
               id="login-email"
               type="text"

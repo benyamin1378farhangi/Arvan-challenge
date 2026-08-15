@@ -3,9 +3,6 @@ import { cookies } from "next/headers";
 import { apiFetch, ApiError } from "@/lib/api/http";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 
-// DummyJSON's /posts/tags isn't sorted — Figma's tips note for the Tags
-// panel says the list should be "sorted alphabetically", so that's done
-// here rather than on every client render.
 export async function GET() {
   const cookieStore = await cookies();
   if (!cookieStore.get(SESSION_COOKIE_NAME)?.value) {

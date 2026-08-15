@@ -17,11 +17,6 @@ const NAV_ITEMS = [
   { href: ROUTES.createArticle, label: "New Article", exact: true },
 ];
 
-// The one Client Component in the dashboard layout tree — everything else
-// under (dashboard)/layout.js can stay a Server Component. Only this shell
-// needs useCurrentUser()/useLogout(), which are hooks — and, as of Phase 9,
-// the mobile Sidebar drawer's open/closed state, which is UI-only and has
-// no reason to live anywhere but here.
 export default function DashboardShell({ children }) {
   const router = useRouter();
   const { data } = useCurrentUser();

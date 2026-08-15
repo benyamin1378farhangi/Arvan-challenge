@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,67 +10,26 @@ import Modal from "@/components/ui/Modal";
 import Pagination from "@/components/ui/Pagination";
 import Button from "@/components/ui/Button";
 import Toast from "@/components/ui/Toast";
+import AutoDismissToast from "@/components/ui/AutoDismissToast";
 import { useArticles } from "@/hooks/useArticles";
 import { useDeleteArticle } from "@/hooks/useDeleteArticle";
 import { useArticleOverrides, recordDeletedArticle } from "@/hooks/useArticleOverrides";
 import { ROUTES } from "@/constants/routes";
 import { ARTICLES_PAGE_SIZE } from "@/constants/pagination";
 
-// DummyJSON's post `body` has no separate summary field — Figma's own
-// "tips" note for this column says the excerpt is "First 20 words of
-// article body", so that's how it's derived here.
 function getExcerpt(body) {
   const words = body.split(" ");
   return words.length > 20 ? `${words.slice(0, 20).join(" ")}…` : body;
 }
 
-// طبق تصویر مرجع Figma، فقط created/updated پیشوند بولد "Well done!" دارند؛
-// پیام Delete یک متن ساده و بدون پیشوند است.
 const SUCCESS_TOAST_MESSAGES = {
   created: { title: "Well done!", description: "Article created successfully" },
   updated: { title: "Well done!", description: "Article updated successfully" },
   deleted: { title: "Article deleted successfully", description: "" },
 };
 
-// How long the success Toast stays up before auto-dismissing (Figma shows
-// it disappearing on its own, not a duration) — an implementation choice,
-// not a measured value.
-const SUCCESS_TOAST_DURATION_MS = 4000;
-
-// A separate component, mounted fresh via `key` each time the triggering
-// query param changes (see the call site) — not local state synced from a
-// prop/param via an effect, which is exactly the pattern this project's
-// ESLint config (react-hooks/set-state-in-effect) flags as an
-// anti-pattern. Remounting via `key` sidesteps that entirely: its own
-// `useState(true)` + timeout only ever run once per mount.
-function SuccessToast({ type }) {
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(false), SUCCESS_TOAST_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!visible) return null;
-
-  const { title, description } = SUCCESS_TOAST_MESSAGES[type];
-
-  return (
-    <div className="fixed inset-x-0 top-6 z-50 flex justify-center px-4">
-      <Toast variant="success" title={title} description={description} />
-    </div>
-  );
-}
-
 export default function ArticlesList({ page }) {
   const router = useRouter();
-  // Read directly from the URL instead of a Server-Component-threaded
-  // prop: Delete/Edit redirect to /articles (or the same /articles) via
-  // router.push, and a plain prop wasn't reliably updating in time — this
-  // is exactly what useSearchParams() is for, and it's what next/navigation
-  // recommends for reactive access to the current URL in a Client
-  // Component. Requires the Suspense boundary added around this component
-  // at both call sites (articles/page.js, articles/page/[page]/page.js).
   const searchParams = useSearchParams();
   const successToastType = searchParams.get("created") === "1"
     ? "created"
@@ -86,9 +45,6 @@ export default function ArticlesList({ page }) {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const deleteArticleMutation = useDeleteArticle();
 
-  // What DummyJSON actually returned, with this session's local
-  // delete/edit overrides applied on top — see useArticleOverrides for why
-  // this exists instead of trusting a refetch after a mutation.
   const fetchedPosts = (data?.posts ?? [])
     .filter((post) => !overrides.deletedIds.includes(post.id))
     .map((post) => {
@@ -96,10 +52,6 @@ export default function ArticlesList({ page }) {
       return override ? { ...post, ...override } : post;
     });
 
-  // Articles created this session, newest first, on top of page 1 only —
-  // there's no real "created date" to sort DummyJSON's own posts by
-  // (see recordCreatedArticle), so this is the only sense in which "new
-  // articles appear first" can honestly be implemented.
   const localCreatedPosts = page === 1 ? overrides.createdArticles : [];
   const posts = [...localCreatedPosts, ...fetchedPosts];
 
@@ -111,19 +63,9 @@ export default function ArticlesList({ page }) {
   };
 
   const handleConfirmDelete = () => {
-    // Defensive: onConfirm is wired directly to the Modal's Confirm
-    // button, and nothing at the type/runtime level actually guarantees
-    // deleteTarget is still set by the time this fires (e.g. a rapid
-    // double-click before the button's disabled/isConfirming state
-    // re-renders). Without this, that race throws trying to read `.id`
-    // off null instead of just being a no-op.
     if (!deleteTarget) return;
 
     if (deleteTarget.isLocal) {
-      // Never existed on DummyJSON to begin with (see
-      // recordCreatedArticle) — calling DELETE on its fake id would just
-      // 404. Remove it from the local list directly and treat it exactly
-      // like a normal successful delete otherwise.
       recordDeletedArticle(queryClient, deleteTarget.id);
       setDeleteTarget(null);
       router.push(`${ROUTES.articles}?deleted=1`);
@@ -138,11 +80,6 @@ export default function ArticlesList({ page }) {
     });
   };
 
-  // Shared by both the >=md table row and the <md card (Phase 9) so the
-  // Edit/Delete wiring only exists once. Edit is omitted for locally
-  // created articles — the Edit page fetches the article server-side by
-  // id from DummyJSON, which has no record of a locally-generated id and
-  // would 404.
   const getActionItems = (post) => [
     ...(post.isLocal
       ? []
@@ -152,13 +89,16 @@ export default function ArticlesList({ page }) {
 
   return (
     <Section className="p-6">
-      {/* key={successToastType} mounts a fresh SuccessToast whenever the
-          type changes. Known gap: two deletes in a row both redirect to
-          the literal same "?deleted=1" URL, so a second delete within the
-          first toast's 4s window reuses the same key/instance rather than
-          resetting its timer — not addressed, a low-probability edge case
-          not worth a nonce-based key for. */}
-      {successToastType && <SuccessToast key={successToastType} type={successToastType} />}
+      {successToastType && (
+        <div className="fixed inset-x-0 top-6 z-50 flex justify-center px-4">
+          <AutoDismissToast
+            key={successToastType}
+            variant="success"
+            title={SUCCESS_TOAST_MESSAGES[successToastType].title}
+            description={SUCCESS_TOAST_MESSAGES[successToastType].description}
+          />
+        </div>
+      )}
 
       <div className="mb-4 border-b border-neutral-st3 pb-4">
         <h1 className="text-title-3 tracking-title-3 font-semibold text-neutral-fg1">
@@ -196,11 +136,6 @@ export default function ArticlesList({ page }) {
 
       {!isLoading && !isError && data && posts.length > 0 && (
         <>
-          {/* >=md: the original table, now inside an overflow-x-auto
-              wrapper as a safety fallback (Phase 9) — below md it's
-              replaced entirely by the card list, this is a fallback for
-              content wider than expected at md/lg, not the primary mobile
-              treatment. */}
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left">
               <thead>
@@ -225,11 +160,6 @@ export default function ArticlesList({ page }) {
                     <td className="py-3 pr-4 text-body-2 tracking-body-2 font-semibold text-neutral-fg1">
                       {post.title}
                     </td>
-                    {/* DummyJSON posts only carry a numeric userId, not a
-                        username — resolving it to a real name would mean an
-                        extra request per row (see Phase 5 plan). A locally
-                        created article shows "You" instead, since we do
-                        know, honestly, who just created it. */}
                     <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
                       {post.isLocal ? "You" : `User #${post.userId}`}
                     </td>
@@ -239,10 +169,6 @@ export default function ArticlesList({ page }) {
                     <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
                       {getExcerpt(post.body)}
                     </td>
-                    {/* DummyJSON posts have no date field at all — shown as
-                        "—" rather than a fabricated timestamp. A locally
-                        created article gets "Just now", which is honest
-                        (we do know it was created this session). */}
                     <td className="py-3 pr-4 text-body-2 tracking-body-2 text-neutral-fg2">
                       {post.isLocal ? "Just now" : "—"}
                     </td>
@@ -258,12 +184,6 @@ export default function ArticlesList({ page }) {
             </table>
           </div>
 
-          {/* <md: Card/List layout (Phase 9) — Figma has no mobile design
-              for this table, so this is an implementation decision, not a
-              Figma-derived layout. Same fields minus Created (already just
-              "—" — not worth the vertical space on a small screen) and #
-              (the id has no real meaning to a reader; Title is the primary
-              identifier here). */}
           <div className="flex flex-col gap-3 md:hidden">
             {posts.map((post) => (
               <div key={post.id} className="rounded-lg border border-neutral-st3 p-4">
@@ -291,13 +211,6 @@ export default function ArticlesList({ page }) {
             ))}
           </div>
 
-          {/* Bottom-right of the card, not centered — confirmed against the
-              Figma "Dashboard -> Article updated" reference (the
-              pagination control's center sits well right of the card's
-              center, roughly flush with the table's right edge). Note:
-              totalPages still comes from DummyJSON's unmodified `total` —
-              deleting a row locally doesn't (and can't honestly) shrink
-              the real page count. */}
           <div className="mt-4 flex justify-end">
             <Pagination
               currentPage={page}

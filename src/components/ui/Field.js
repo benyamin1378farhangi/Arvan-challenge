@@ -1,13 +1,5 @@
 import { cx } from "@/utils/cx";
 
-// Deliberately doesn't clone/inject props into `children` — the caller
-// wires `id`/`error`/`{...register()}` onto the input itself explicitly.
-// Slightly more to type at the call site, but every prop that ends up on
-// the input is visible right there instead of happening implicitly here.
-//
-//   <Field label="Email" htmlFor="email" error={errors.email?.message}>
-//     <Input id="email" error={Boolean(errors.email)} {...register("email")} />
-//   </Field>
 export default function Field({
   label,
   htmlFor,

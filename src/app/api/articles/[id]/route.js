@@ -3,10 +3,6 @@ import { cookies } from "next/headers";
 import { apiFetch, ApiError } from "@/lib/api/http";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 
-// Unlike POST /api/articles, this doesn't need to call /auth/me first —
-// DummyJSON's PUT /posts/:id already knows the record's original userId
-// and preserves it (verified directly), so there's nothing to derive
-// server-side beyond confirming our own session cookie is present.
 export async function PUT(request, { params }) {
   const cookieStore = await cookies();
   if (!cookieStore.get(SESSION_COOKIE_NAME)?.value) {
@@ -52,9 +48,6 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DummyJSON's DELETE, like POST/PUT, doesn't check authorization at all
-// (verified — no Authorization header was needed) — the session cookie
-// check below is the only access control this operation has.
 export async function DELETE(request, { params }) {
   const cookieStore = await cookies();
   if (!cookieStore.get(SESSION_COOKIE_NAME)?.value) {

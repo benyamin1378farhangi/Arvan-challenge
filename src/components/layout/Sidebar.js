@@ -4,23 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cx } from "@/utils/cx";
 
-// Client Component: needs usePathname() to highlight the active item.
-// Takes `items` instead of hardcoding "All Articles" / "New Article" so
-// the same component can be reused as-is if a nav item is ever added —
-// still a two-line prop, not a speculative abstraction.
-//
-// `isActive(pathname)` is an escape hatch for items whose "active" range
-// isn't a clean prefix of their href — e.g. "All Articles" (/articles)
-// must also stay highlighted on /articles/page/2, but a plain prefix match
-// on "/articles" would incorrectly also match /articles/create and
-// /articles/edit/*. Falls back to the original exact/prefix behavior when
-// not provided.
-//
-// `open`/`onNavigate` (Phase 9) only affect layout below `lg`: below that
-// breakpoint this renders as an off-canvas drawer (fixed, translated
-// off-screen unless `open`) with a backdrop; at `lg` and up the drawer
-// classes are overridden back to the original static, always-visible
-// sidebar — same markup, no separate desktop/mobile component.
 export default function Sidebar({ items, open = false, onNavigate }) {
   const pathname = usePathname();
 

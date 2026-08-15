@@ -1,12 +1,6 @@
 import { cx } from "@/utils/cx";
 import { SpinnerIcon } from "./icons";
 
-// Only the variants actually used across the Challenge screens:
-// primary (Sign in, Submit, Confirm), secondary (Cancel, Actions trigger,
-// outline buttons) and danger (Delete). Design Kit also has a
-// Primary+Danger "icon" layout combo that never appears in any screen, so
-// it's not specifically catered for beyond what `layout="icon"` already
-// gives any variant.
 const VARIANT_CLASSES = {
   primary:
     "bg-primary text-neutral-fg3 hover:bg-primary-hover active:bg-primary-press disabled:bg-primary-disabled",

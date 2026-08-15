@@ -13,11 +13,6 @@ function slugify(value) {
     .replace(/(^-|-$)/g, "");
 }
 
-// One input does double duty, matching Figma's single "New tag" field:
-// typing filters the checkbox list, and Enter either checks an existing
-// tag that matches or adds a brand-new one (auto-checked, per the Figma
-// tips note). New tags are local-only — DummyJSON has no endpoint that
-// would actually persist a new tag, so this never claims otherwise.
 export default function TagsPanel({ selected, onChange }) {
   const { data: tags = [], isLoading } = useTags();
   const [search, setSearch] = useState("");

@@ -1,10 +1,6 @@
-# Arvancloud Frontend Challenge — Blog Dashboard
+# چالش فرانت‌اند آروان‌کلود — داشبورد مدیریت بلاگ
 
-Work in progress. Full documentation (architecture, design system, API
-layer, known limitations) is written in Phase 12 once the app is feature
-complete.
-
-## Development
+## راه‌اندازی
 
 ```bash
 npm install
@@ -12,373 +8,352 @@ cp .env.example .env.local
 npm run dev
 ```
 
-## Responsive
+## واکنش‌گرایی (Responsive)
 
-Figma has no mobile or tablet screens at all — every one of its 11 frames
-is 1440px wide, and the challenge brief says explicitly that a mobile
-version wasn't designed. Every decision below is an implementation choice,
-not something read off a design.
+فیگما هیچ صفحه‌ی موبایل یا تبلتی ندارد — هر ۱۱ فریم آن عرض ۱۴۴۰ پیکسل دارند
+و متن چالش هم صراحتاً گفته که نسخه‌ی موبایل طراحی نشده. پس تمام تصمیم‌های
+زیر پیاده‌سازی‌اند، نه چیزی که از روی طراحی خوانده شده باشد.
 
-**Breakpoints.** Tailwind's defaults, unchanged (`sm` 640 / `md` 768 / `lg`
-1024 / `xl` 1280) — no custom breakpoint was added. Tablet (768–1023px)
-intentionally gets the same treatment as mobile (drawer sidebar, stacked
-form, card list) rather than an in-between layout: at 768px wide, a fixed
-240px sidebar plus real content is still cramped, so there was no reason
-to design a third state.
+**Breakpoint ها.** مقادیر پیش‌فرض Tailwind بدون تغییر (`sm` 640 / `md` 768 /
+`lg` 1024 / `xl` 1280). تبلت (768 تا 1023 پیکسل) عمداً همان رفتار موبایل را
+می‌گیرد (Sidebar کشویی، فرم تک‌ستونه، لیست کارتی) و یک حالت میانی جدا ندارد؛
+چون در عرض 768، یک Sidebar ثابت 240 پیکسلی به‌همراه محتوای واقعی همچنان
+تنگ است.
 
-**Sidebar** is a fixed-position, off-canvas drawer below `lg` (closed by
-default, opened by the Header's hamburger, closed by its own backdrop or
-by picking a nav item) and exactly the original always-visible static
-sidebar at `lg` and up — same markup, same `isActive` logic, Tailwind
-classes just resolve differently per breakpoint. No new component; the
-drawer is `open`/`onNavigate` props added to the existing `Sidebar`.
+**Sidebar** زیر `lg` یک drawer شناور و خارج از صفحه است (به‌طور پیش‌فرض بسته،
+با دکمه‌ی همبرگر در Header باز می‌شود، با کلیک روی backdrop یا انتخاب یک آیتم
+بسته می‌شود) و از `lg` به بالا همان Sidebar ثابت و همیشه‌نمایان قبلی است —
+یک مارک‌آپ، همان منطق `isActive`، فقط کلاس‌های Tailwind بسته به breakpoint
+فرق می‌کنند. کامپوننت جدیدی ساخته نشده؛ فقط پراپ‌های `open`/`onNavigate` به
+`Sidebar` موجود اضافه شده‌اند.
 
-**Header** drops the "Arvancloud Challenge" pill entirely below `lg` (pure
-decoration, not information), truncates a long username instead of
-squeezing Logout off-screen, and gains a hamburger button using the
-existing `Button` (`layout="icon"`) — not a new component.
+**Header** زیر `lg` پیل "Arvancloud Challenge" را کاملاً حذف می‌کند (چون
+صرفاً تزئینی است)، یوزرنیم طولانی را truncate می‌کند به‌جای اینکه دکمه‌ی
+Logout را از صفحه بیرون بیندازد، و یک دکمه‌ی همبرگر با همان کامپوننت
+`Button` (`layout="icon"`) اضافه می‌کند — نه یک کامپوننت جدید.
 
-**Articles list.** >=`md`: the original table, now wrapped in
-`overflow-x-auto` as a safety fallback. <`md`: a card per article (Title,
-Author, Excerpt, Tags, Actions — Created is dropped since it only ever
-shows "—" anyway, and the `#` id has no reader-facing meaning). Both live
-in the same `ArticlesList.js`, sharing one `getActionItems()` helper for
-the Edit/Delete `Dropdown` so that wiring only exists once. No new
-component — the JSX for two layouts of the same data didn't get
-unmanageable enough to justify splitting out.
+**لیست مقالات.** در `>=md`: همان جدول قبلی، حالا داخل یک `overflow-x-auto`
+به‌عنوان fallback ایمنی. در `<md`: یک کارت برای هر مقاله (عنوان، نویسنده،
+خلاصه، تگ‌ها، اکشن‌ها — ستون Created حذف شده چون همیشه فقط "—" نشان می‌دهد
+و شناسه‌ی `#` هم برای خواننده معنایی ندارد). هر دو در همان `ArticlesList.js`
+هستند و یک تابع مشترک `getActionItems()` برای Dropdown ویرایش/حذف استفاده
+می‌کنند.
 
-**Create/Edit Article form.** The two-column layout (form + Tags panel)
-holds at `lg`+; below that it's a single column, full-width, form fields
-above Tags — same DOM order, so tab order doesn't change, just
-`flex-direction`. The old fixed `w-[376px]` on the Tags column (which by
-itself exceeded a phone's viewport width) is now `lg:w-[376px]`.
+**فرم ساخت/ویرایش مقاله.** چیدمان دوستونه (فرم + پنل Tags) در `lg`+ حفظ
+می‌شود؛ زیر آن یک ستون تمام‌عرض است، با فیلدهای فرم بالای Tags — همان ترتیب
+DOM، فقط `flex-direction` عوض می‌شود. عرض ثابت قبلی `w-[376px]` روی ستون
+Tags (که به‌تنهایی از عرض یک موبایل هم بیشتر بود) حالا `lg:w-[376px]` شده.
 
-**Pagination.** Below `sm`, the full numbered nav (which doesn't reliably
-fit that narrow) is replaced by a compact "Prev / current of total / Next"
-nav; `sm` and up keeps the original. Both are rendered and Tailwind's `sm:`
-classes pick one — no JS media-query logic.
+**صفحه‌بندی.** زیر `sm`، ناوبری کامل شماره‌دار (که در این عرض جا نمی‌شود) با
+یک نسخه‌ی فشرده‌ی "Prev / صفحه‌ی جاری از کل / Next" جایگزین می‌شود؛ از `sm`
+به بالا همان نسخه‌ی قبلی. هر دو رندر می‌شوند و کلاس‌های `sm:` در Tailwind
+تعیین می‌کنند کدام دیده شود — بدون منطق JS.
 
-**Modal, Toast, and the Auth pages (`/login`, `/register`) needed no
-changes** — an audit before implementing found they were already
-mobile-safe from how they were originally built (`w-full max-w-[...]` on
-the card/dialog plus outer `p-4`), not something added for this phase.
+**Modal، Toast و صفحات Auth (`/login`، `/register`) نیازی به تغییر نداشتند**
+— بررسی قبل از پیاده‌سازی نشان داد از قبل با ساختار `w-full max-w-[...]`
+روی کارت/دیالوگ به‌همراه `p-4` بیرونی، در موبایل هم درست کار می‌کنند.
 
-## Authentication
+## احراز هویت
 
-Demo credentials (DummyJSON's test account):
+اطلاعات ورود دمو:
 
 ```
-username: emilys
-password: emilyspass
+username: arvan
+password: arvanpass
 ```
 
-**Architecture.** The client never talks to DummyJSON directly for auth.
-`useLogin`/`useLogout`/`useCurrentUser` (TanStack Query) call our own Route
-Handlers under `app/api/auth/*`, which call DummyJSON server-side and set
-an HttpOnly cookie (`session_token`) on the app's own domain. The client
-only ever receives non-sensitive user fields (id, username, email, name,
-image) — never the access token, and never DummyJSON's raw user object
-(which includes the account's password, SSN, bank details, etc.).
+این یک اکانت واقعی روی DummyJSON نیست؛ هندلر `POST /api/auth/login` این
+اطلاعات را قبل از تماس با DummyJSON، سمت سرور به اکانت تستی واقعی DummyJSON
+(`emilys`/`emilyspass`) نگاشت می‌کند (`resolveDummyJsonCredentials` در
+`lib/auth/constants.js`). خود اکانت `emilys` هم همچنان کار می‌کند؛ `arvan`
+صرفاً یک نام کاربری آشناتر برای دمو است.
 
-**Why HttpOnly cookie, not localStorage.** A token in localStorage is
-readable by any script on the page, so it's a direct target for XSS. An
-HttpOnly cookie can't be read from JavaScript at all. The trade-off is more
-moving parts — a Route Handler in front of every DummyJSON auth call
-instead of a plain client-side `fetch` — which is why it's isolated to
-`app/api/auth/*` rather than spread across components.
+**معماری.** کلاینت هرگز مستقیم با DummyJSON برای auth صحبت نمی‌کند.
+`useLogin`/`useLogout`/`useCurrentUser` (با TanStack Query) Route Handler های
+خودمان زیر `app/api/auth/*` را صدا می‌زنند، که سمت سرور با DummyJSON صحبت
+می‌کنند و یک کوکی HttpOnly (`session_token`) روی دامنه‌ی خودمان تنظیم
+می‌کنند. کلاینت فقط فیلدهای غیرحساس کاربر (id، username، email، نام، عکس)
+را می‌بیند — هرگز access token و هرگز آبجکت خام کاربر از DummyJSON (که شامل
+رمز عبور، کد ملی، اطلاعات بانکی و... است).
 
-**Why a Route Handler (not a Server Action or direct client call).** Every
-other server interaction in this app goes through a TanStack Query
-mutation/query calling `lib/api`; auth follows the same shape instead of
-introducing a second pattern. A Route Handler is also what makes setting an
-HttpOnly cookie on our own domain possible in the first place — DummyJSON's
-own `Set-Cookie` is scoped to `dummyjson.com` and never reaches us.
+**چرا کوکی HttpOnly، نه localStorage.** توکنی که در localStorage باشد با هر
+اسکریپتی روی صفحه قابل خواندن است، پس هدف مستقیم XSS است. کوکی HttpOnly
+اصلاً از جاوااسکریپت خوانده نمی‌شود. هزینه‌اش این است که به‌جای یک `fetch`
+ساده‌ی کلاینتی، یک Route Handler جلوی هر تماس auth با DummyJSON لازم است —
+به همین دلیل این منطق فقط در `app/api/auth/*` نگه داشته شده، نه پخش‌شده در
+کامپوننت‌ها.
 
-**Route protection.** `proxy.js` (Next's `middleware.js` convention,
-renamed in this Next.js version) checks for the presence of the session
-cookie only — not whether the token inside it is still valid — for
-`/articles/*`, `/login` and `/register`. An expired or invalid token is
-caught on first use by `/api/auth/me`, which returns 401 and clears the
-cookie.
+**چرا Route Handler (نه Server Action یا تماس مستقیم کلاینت).** بقیه‌ی
+تعامل‌های این اپ با سرور از طریق query/mutation های TanStack Query که
+`lib/api` را صدا می‌زنند انجام می‌شود؛ auth هم همان الگو را دنبال می‌کند تا
+یک الگوی دوم اضافه نشود. Route Handler همچنین تنها راهی است که می‌شود کوکی
+HttpOnly روی دامنه‌ی خودمان تنظیم کرد — `Set-Cookie` خود DummyJSON محدود به
+دامنه‌ی `dummyjson.com` است و هرگز به ما نمی‌رسد.
 
-**DummyJSON limitations this app works around:**
-- *Login is username-based, but Figma labels the field "Email".* The label
-  stays as designed; its value is submitted to DummyJSON as `username`
-  without email-format validation (DummyJSON's test account, `emilys`,
-  isn't an email address).
-- *DummyJSON has no real registration.* `POST /users/add` is a documented,
-  real endpoint, but per DummyJSON's own docs it only simulates the
-  request — the created account is never persisted and can't subsequently
-  log in. The Sign-up form still submits to it (so the full loading/error
-  flow is real, not faked), but on success the user is redirected to
-  `/login` with a message explaining the account isn't usable, rather than
-  being auto-logged-in.
-- *`/auth/me` is inconsistent on failure* — DummyJSON returns 401 for a
-  missing token but 500 for an invalid one. `/api/auth/me` normalizes both
-  into a single 401.
+**محافظت از مسیرها.** `proxy.js` (قرارداد `middleware.js` نکست، که در این
+نسخه تغییر نام داده) فقط وجود کوکی سشن را برای `/articles/*`، `/login` و
+`/register` چک می‌کند — نه اینکه توکن داخل آن هنوز معتبر است یا نه. توکن
+منقضی یا نامعتبر در اولین استفاده توسط `/api/auth/me` تشخیص داده می‌شود که
+401 برمی‌گرداند و کوکی را پاک می‌کند.
 
-## Dashboard / Articles
+**محدودیت‌های DummyJSON که این اپ دورشان می‌زند:**
+- *ورود بر اساس username است، اما فیگما این فیلد را "Email" می‌نامد.* لیبل
+  همان‌طور که طراحی شده باقی می‌ماند؛ مقدارش بدون اعتبارسنجی فرمت ایمیل
+  به‌عنوان `username` ارسال می‌شود (چون اکانت تستی DummyJSON یعنی `emilys`
+  اصلاً ایمیل نیست).
+- *DummyJSON ثبت‌نام واقعی ندارد.* `POST /users/add` یک اندپوینت واقعی و
+  مستند است، اما طبق مستندات خود DummyJSON فقط شبیه‌سازی می‌کند — حساب
+  ساخته‌شده هرگز ذخیره نمی‌شود و نمی‌تواند بعداً وارد شود. فرم ثبت‌نام همچنان
+  واقعاً این اندپوینت را صدا می‌زند (پس جریان loading/error کاملاً واقعی
+  است)، ولی در صورت موفقیت کاربر به `/login` با پیامی مبنی بر غیرقابل‌استفاده
+  بودن حساب هدایت می‌شود، نه ورود خودکار.
+- *`/auth/me` در خطا ناسازگار است* — DummyJSON برای توکن غایب 401 و برای
+  توکن نامعتبر 500 برمی‌گرداند. `/api/auth/me` هر دو را به یک 401 یکسان
+  تبدیل می‌کند.
 
-**Data fetching.** `/articles` and `/articles/page/:page` prefetch the
-article list server-side (`queryClient.prefetchQuery` + `HydrationBoundary`)
-so the initial HTML already contains real data instead of a loading flash,
-then `ArticlesList` picks up the same query client-side via `useArticles`
-for pagination/refetching. Both routes are marked `force-dynamic` — this
-list is paginated, live data behind auth, so it has no business being
-baked into the build as static HTML.
+## داشبورد / مقالات
 
-**Success Toasts** (`?created=1`/`?updated=1`/`?deleted=1`) are read via
-`useSearchParams()` directly inside `ArticlesList`, not threaded down as a
-prop from the Server Component. Delete redirects to this exact same route
-(`/articles`), just with a different query string, so `ArticlesList` stays
-mounted and only gets new props on that navigation — a plain prop wasn't
-reliably reflecting the change in time, while `useSearchParams()` is
-next/navigation's own mechanism for reactively reading the current URL in
-a Client Component and updates correctly regardless of that timing. This
-requires wrapping `<ArticlesList>` in `<Suspense>` at both call sites,
-which Next.js enforces for anything using `useSearchParams()`.
+**دریافت داده.** مسیرهای `/articles` و `/articles/page/:page` لیست مقالات را
+سمت سرور prefetch می‌کنند (`queryClient.prefetchQuery` + `HydrationBoundary`)
+تا HTML اولیه از قبل داده‌ی واقعی داشته باشد، سپس `ArticlesList` همان کوئری
+را سمت کلاینت با `useArticles` برای صفحه‌بندی/refetch ادامه می‌دهد. هر دو
+مسیر `force-dynamic` علامت خورده‌اند — این لیست صفحه‌بندی‌شده، داده‌ی زنده و
+پشت auth است، پس نباید در build به‌صورت HTML استاتیک ثابت شود.
 
-**Pagination.** Page 1's canonical URL is `/articles`; later pages are
-`/articles/page/:page`. Visiting `/articles/page/1` redirects to
-`/articles`. A non-numeric or sub-1 page (`/articles/page/abc`,
-`/articles/page/0`) is a 404. A page past the last one isn't treated as an
-error — DummyJSON returns an empty `posts` array for a `skip` beyond
-`total` (verified directly against the live API), which renders as the
-same "No articles yet" empty state as a genuinely empty list.
+**Toast های موفقیت** (`?created=1`/`?updated=1`/`?deleted=1`) مستقیم داخل
+`ArticlesList` با `useSearchParams()` خوانده می‌شوند، نه از طریق پراپ از
+Server Component. چون حذف به همین مسیر (`/articles`) با query string متفاوت
+ریدایرکت می‌کند، `ArticlesList` mount شده باقی می‌ماند و فقط پراپ‌های جدید
+می‌گیرد — یک پراپ ساده به‌موقع این تغییر را منعکس نمی‌کرد، در حالی که
+`useSearchParams()` مکانیزم خود next/navigation برای خواندن واکنشی URL
+جاری در یک Client Component است. این نیازمند پیچیدن `<ArticlesList>` در
+`<Suspense>` در هر دو نقطه‌ی فراخوانی است، که Next.js برای هر استفاده از
+`useSearchParams()` الزامی می‌کند.
 
-**Author / Created columns — DummyJSON data limitation.** Figma's table
-has `Author` (`@username`) and `Created` (a date) columns, but a DummyJSON
-post object only has a numeric `userId` — no username, and no date field
-at all:
+**صفحه‌بندی.** آدرس اصلی صفحه‌ی ۱، `/articles` است؛ صفحات بعدی
+`/articles/page/:page` هستند. رفتن به `/articles/page/1` به `/articles`
+ریدایرکت می‌شود. صفحه‌ی غیرعددی یا کمتر از ۱ (`/articles/page/abc`،
+`/articles/page/0`) خطای 404 می‌دهد. صفحه‌ای بیشتر از آخرین صفحه خطا محسوب
+نمی‌شود — DummyJSON برای `skip` بیشتر از `total` آرایه‌ی `posts` خالی
+برمی‌گرداند، که همان حالت خالی "No articles yet" را نمایش می‌دهد.
+
+**ستون‌های Author / Created — محدودیت داده‌ی DummyJSON.** جدول فیگما ستون
+`Author` (`@username`) و `Created` (تاریخ) دارد، اما آبجکت پست DummyJSON فقط
+یک `userId` عددی دارد — نه یوزرنیم، نه هیچ فیلد تاریخی:
 
 ```json
 { "id": 1, "title": "...", "body": "...", "tags": [...], "userId": 121 }
 ```
 
-- **Author** is shown as `User #{userId}`. Resolving it to a real username
-  would mean an extra `GET /users/:id` request per row (an N+1 pattern) —
-  not worth the added complexity/latency for this challenge.
-- **Created** is shown as `—`. There is no date field to show, and no
-  timestamp is fabricated for it.
+- **Author** به‌صورت `User #{userId}` نشان داده می‌شود. تبدیل آن به یوزرنیم
+  واقعی یعنی یک درخواست `GET /users/:id` اضافه برای هر ردیف (الگوی N+1) —
+  که برای این چالش ارزش پیچیدگی/تأخیر اضافه‌اش را ندارد.
+- **Created** به‌صورت `—` نشان داده می‌شود. فیلد تاریخی وجود ندارد و هیچ
+  تایمستمپی هم ساختگی درست نشده.
 
-**Excerpt** *is* derivable — Figma's own note for that column says "first
-20 words of article body", which is what's shown.
+**Excerpt** واقعاً قابل استخراج است — طبق راهنمای فیگما برای این ستون،
+"۲۰ کلمه‌ی اول متن مقاله" نشان داده می‌شود.
 
-**Delete** — see the "Delete Article" section below for the full flow;
-this note is a leftover from an earlier phase where it was intentionally
-partial and is no longer accurate.
+## Local Overrides (چرا لیست علی‌رغم DummyJSON واقعاً آپدیت می‌شود)
 
-## Local Overrides (why the list actually updates despite DummyJSON)
+Create/Edit/Delete همگی یک `200`/`201` واقعی از DummyJSON می‌گیرند، اما
+هیچ‌کدام ذخیره نمی‌شوند — یک `GET` بعدی همیشه داده‌ی اصلی و دست‌نخورده را
+برمی‌گرداند (به‌طور مستقیم برای هرکدام تأیید شده). اگر ساده‌لوحانه بعد از
+mutation موفق `invalidateQueries` صدا زده شود، یک refetch همان لیست قبلی را
+برمی‌گرداند، و حذف انگار کار نکرده و ویرایش انگار ذخیره نشده به‌نظر می‌رسد.
 
-Create/Edit/Delete all get a real `200`/`201` from DummyJSON, but none of
-it is persisted — a follow-up `GET` always returns the original, untouched
-data (verified directly for each, see below). Naively calling
-`invalidateQueries` after a successful mutation would trigger a refetch
-that brings back the exact same list, making a delete look like it didn't
-work and an edit look like it didn't save.
+به‌جای آن، `useCreateArticle`/`useUpdateArticle`/`useDeleteArticle` آنچه را
+که واقعاً اتفاق افتاده — یک پست محلی جدید، فیلدهای جدید یک پست، یا یک id
+حذف‌شده — در یک ورودی کش فقط-برای-همین-سشن ثبت می‌کنند
+(`queryKeys.articles.localOverrides`، خواندن با `useArticleOverrides`،
+نوشتن با توابع `record*Article` در همان فایل) که کاملاً از کوئری اصلی لیست
+مقالات جداست. `ArticlesList` در هر رندر این override را روی خروجی کوئری
+لیست اعمال می‌کند، پس ردیف ساخته‌شده ظاهر می‌شود، ردیف حذف‌شده ناپدید می‌شود
+و ردیف ویرایش‌شده بلافاصله عنوان/متن/تگ‌های جدیدش را نشان می‌دهد — صرف‌نظر
+از اینکه لیست اصلی چند بار در پس‌زمینه refetch یا rehydrate شود.
 
-Instead, `useCreateArticle`/`useUpdateArticle`/`useDeleteArticle` record
-what actually happened — a new local post, a post's new fields, or a
-deleted id — into a small session-only cache entry
-(`queryKeys.articles.localOverrides`, read via `useArticleOverrides`,
-written via the `record*Article` functions in the same file) that's
-completely separate from the real articles list query. `ArticlesList`
-applies it on top of whatever the list query returns, every render, so a
-created row appears, a deleted row disappears, and an edited row shows its
-new title/body/tags immediately — regardless of how many times the
-underlying list gets refetched or re-hydrated from the server in the
-background.
+**مقالات ساخته‌شده‌ی محلی** به‌جای اعتماد به پاسخ DummyJSON، یک id منفی و
+ساخته‌شده در کلاینت می‌گیرند: `POST /posts/add` همیشه همان id ثابت
+(`total + 1`، که `total` هم هرگز واقعاً تغییر نمی‌کند) را برمی‌گرداند، پس
+بدون این کار هر ساخت جدید در یک سشن روی همان id تداخل پیدا می‌کرد. این id
+منفی همچنین نقش سیگنال `isLocal` را بازی می‌کند که برای نشان دادن صادقانه‌ی
+یک پستی که هرگز واقعاً ذخیره نشده استفاده می‌شود:
+- **Author** به‌جای `User #{id}` می‌شود "You" (چون DummyJSON اصلاً userId
+  واقعی به آن نداده، ولی خودمان می‌دانیم چه کسی همین الان ساختش).
+- **Created** به‌جای "—" می‌شود "Just now" (چون DummyJSON اصلاً فیلد تاریخ
+  ندارد، ولی برای این یکی لحظه‌ی ساخت واقعی و معلوم است — همین الان، همین
+  سشن).
+- **مقالات جدید به ابتدای صفحه‌ی ۱ اضافه می‌شوند، جدیدترین اول.** این تنها
+  حالتی است که می‌شود "مرتب‌سازی بر اساس تاریخ ساخت" را صادقانه پیاده کرد —
+  حدود ۲۵۱ پست seed خود DummyJSON اصلاً فیلد تاریخ ندارند، پس ترتیب نسبی
+  آن‌ها دقیقاً همان چیزی می‌ماند که API برمی‌گرداند و برایشان تایمستمپی
+  ساختگی درست نمی‌شود.
+- **Edit برای یک ردیف ساخته‌شده‌ی محلی مخفی می‌شود** — صفحه‌ی Edit مقاله را
+  سمت سرور با id از DummyJSON می‌گیرد، که هیچ رکوردی برای یک id منفی و
+  ساختگی ندارد و 404 می‌دهد. Delete همچنان کار می‌کند، اما کاملاً سمت کلاینت
+  انجام می‌شود (فقط از override حذف می‌کند، نه صدا زدن `DELETE` روی id ای
+  که DummyJSON هرگز نداشته).
 
-**Locally created articles** get a negative, client-generated id instead
-of trusting DummyJSON's response: `POST /posts/add` always returns the
-same id (`total + 1`, and `total` never actually changes), so every create
-in a session would otherwise collide on the identical id. The negative id
-also doubles as the `isLocal` signal used to adjust the UI honestly for a
-post that was never really persisted:
-- **Author** shows "You" instead of `User #{id}` (DummyJSON never gave it
-  a real `userId`, but we do know who just created it).
-- **Created** shows "Just now" instead of "—" (DummyJSON has no date
-  field at all, but this one has a real, known creation moment — right
-  now, this session).
-- **New articles are prepended to page 1, newest first.** This is the
-  only sense in which "sort by creation date" can be implemented
-  honestly — DummyJSON's own ~251 seed posts have no date field to sort
-  by at all, so their relative order is left exactly as the API returns
-  it, and no timestamp is fabricated for them.
-- **Edit is hidden** for a locally created row — the Edit page fetches
-  the article server-side by id from DummyJSON, which has no record of a
-  negative, made-up id and would 404. Delete still works, but is handled
-  entirely client-side (removes it from the override instead of calling
-  `DELETE` on an id DummyJSON never had).
+این عمداً در `localStorage` یا هر جای دائمی دیگری نوشته نمی‌شود: دقیقاً به
+همان اندازه‌ی "موفقیت" mutation روی DummyJSON عمر می‌کند — با رفرش کامل از
+بین می‌رود، که رفتار صادقانه‌ای است چون خود بک‌اند مصنوعی هم واقعاً آن را
+به خاطر نمی‌سپارد. `total`/تعداد صفحات دست‌نخورده باقی می‌مانند (همان اعداد
+واقعی DummyJSON) چون راه صادقانه‌ای برای تنظیم آن‌ها با توجه به تغییراتی که
+بک‌اند اصلاً نمی‌داند وجود ندارد.
 
-This is deliberately not written to `localStorage` or anything else
-durable: it's exactly as long-lived as the mutation "succeeded" on
-DummyJSON — gone on a hard refresh, which is the honest behavior given the
-mock backend never really remembered it either. `total`/page count are
-left alone (still DummyJSON's real numbers) since there's no honest way to
-adjust them for changes the backend doesn't actually know about.
+## ساخت مقاله
 
-## Create Article
+**جریان.** کلاینت (React Hook Form + Zod) → `useCreateArticle` (mutation
+در TanStack Query) → `POST /api/articles` → DummyJSON. در صورت موفقیت: کش
+کوئری مقالات invalidate می‌شود و کاربر به `/articles?created=1` ریدایرکت
+می‌شود، که Toast موفقیت را روی داشبورد نشان می‌دهد (همان الگوی ریدایرکت
+ثبت‌نام به `/login`) نه روی خود صفحه‌ی Create — مطابق فیگما که یک صفحه‌ی
+جدای "Dashboard → Article created" دارد، نه یک Toast روی فرم.
 
-**Flow.** Client (React Hook Form + Zod) → `useCreateArticle` (TanStack
-Query mutation) → `POST /api/articles` → DummyJSON. On success: the
-articles query cache is invalidated and the user is redirected to
-`/articles?created=1`, which shows the success Toast on the Dashboard
-(same pattern as Sign-up's redirect to `/login`) rather than on the Create
-page itself — matching Figma, which has a distinct "Dashboard → Article
-created" screen, not a Toast on the form.
+**`userId` سمت سرور استخراج می‌شود، هرگز از کلاینت اعتماد نمی‌شود.**
+`POST /posts/add` در DummyJSON یک `userId` نیاز دارد (بدون آن خطای
+`400 "User id is required"` می‌دهد)، اما چنین فیلدی در فرم فیگما نیست و
+کاربر آن را پر نمی‌کند. هندلر POST در `/api/articles` با توکن خود سشن،
+`/auth/me` را در DummyJSON صدا می‌زند (همان تماسی که `/api/auth/me` انجام
+می‌دهد) تا id واقعی کاربر لاگین‌شده را بگیرد و از آن استفاده کند —
+`userId` ای که در بدنه‌ی درخواست فرستاده شود اصلاً خوانده نمی‌شود.
 
-**`userId` is derived server-side, never trusted from the client.**
-DummyJSON's `POST /posts/add` requires a `userId` (verified — without it,
-`400 "User id is required"`), but there's no such field in Figma's form;
-it's not something the user fills in. `/api/articles`'s POST handler calls
-DummyJSON's `/auth/me` with the session's own token (the same call
-`/api/auth/me` makes) to get the real logged-in user's id and uses that —
-a `userId` sent in the request body is ignored entirely, it's never read.
+**Description در schema ی DummyJSON جایی ندارد.** یک پست فقط
+`{ title, body, tags, userId }` است — فرستادن فیلد `description` بی‌صدا
+نادیده گرفته می‌شود. فیلد Description در UI باقی می‌ماند (چون در فیگما هست)،
+اما مقدارش قبل از ارسال داخل `body` ادغام می‌شود
+(`description + "\n\n" + body`) تا واقعاً روی مقاله‌ی ساخته‌شده اثر بگذارد
+به‌جای اینکه بی‌صدا دور ریخته شود.
 
-**Description has no home in DummyJSON's schema.** A post is only
-`{ title, body, tags, userId }` — sending a `description` field is
-silently dropped (verified). The Description field stays in the UI
-(Figma has it), but its value is folded into `body` before submitting
-(`description + "\n\n" + body`) so it actually affects the created
-article instead of being entered and quietly discarded.
+**Tags.** لیست پنل از `GET /posts/tags` می‌آید (از طریق `/api/tags` خودمان،
+که به‌صورت الفبایی مرتب شده — چون خود DummyJSON مرتبش نمی‌کند). یک اینپوت
+جستجوی واحد هم این لیست را فیلتر می‌کند و هم با Enter، در صورت نبود match،
+یک تگ جدید (slug شده، خودکار تیک‌خورده) اضافه می‌کند — تگ‌های جدید فقط برای
+طول عمر فرم سمت کلاینت هستند؛ DummyJSON هم اندپوینتی برای ذخیره‌ی واقعی
+یک تگ جدید ندارد.
 
-**Tags.** The panel's list comes from `GET /posts/tags` (via our own
-`/api/tags`, sorted alphabetically by name — DummyJSON doesn't sort it).
-The single search input both filters that list and, on Enter, adds a new
-tag (slugified, auto-checked) if nothing matches — new tags are
-client-side only for the lifetime of the form; DummyJSON has no endpoint
-that would persist a new tag either.
+**ماندگاری — همان محدودیت Login/Register.** `POST /posts/add` یک `201`
+واقعی با پست echo شده (`id`، `title`، `body`، `tags`) برمی‌گرداند، اما هیچ
+چیز واقعاً ذخیره نمی‌شود: یک `GET` برای همان id بلافاصله بعد 404 می‌دهد و
+`total` لیست مقالات هم تغییر نمی‌کند. این موضوع مستقیماً روی API زنده قبل
+و بعد از ساخت یک مقاله‌ی تستی تأیید شده. خود DummyJSON هرگز آن را نگه
+نمی‌دارد — مقاله بعد از ریدایرکت بالای لیست داشبورد نشان داده می‌شود، اما
+فقط به‌خاطر مکانیزم Local Overrides سمت کلاینت (بالا)، نه چون بک‌اند واقعاً
+چیزی ذخیره کرده.
 
-**Persistence — same limitation as Login/Register.** `POST /posts/add`
-returns a real `201` with an echoed post (`id`, `title`, `body`, `tags`),
-but nothing is actually stored: a `GET` for that same id immediately
-afterward 404s, and the articles list's `total` count never changes.
-Verified directly against the live API before and after creating a test
-article. DummyJSON itself never keeps it — the article still shows up at
-the top of the Dashboard list after redirecting, but only because of the
-client-side Local Overrides mechanism (above), not because the backend
-actually stored anything.
+## ویرایش مقاله
 
-## Edit Article
+**جریان.** `app/(dashboard)/articles/edit/[slug]/page.js` (یک Server
+Component) مقاله را مستقیم با `fetchArticleById` می‌گیرد (همان ماژول
+فقط-سرور که Create/Dashboard هم استفاده می‌کنند — نه از طریق `/api/articles`،
+چون چیزی سمت کلاینت به گرفتن یک مقاله‌ی تکی نیاز ندارد) و مستقیم به عنوان
+`defaultValues` به `ArticleForm` می‌دهد. با submit: `useUpdateArticle` →
+`PUT /api/articles/{id}` → DummyJSON → invalidate کش مقالات → ریدایرکت به
+`/articles?updated=1` → Toast موفقیت روی داشبورد، مشابه `?created=1` در
+Create.
 
-**Flow.** `app/(dashboard)/articles/edit/[slug]/page.js` (Server Component)
-fetches the article directly via `fetchArticleById` (the same server-only
-module Create/Dashboard use — not through `/api/articles`, since nothing
-client-side needs to fetch a single article) and passes it straight into
-`ArticleForm` as `defaultValues`. On submit: `useUpdateArticle` →
-`PUT /api/articles/{id}` → DummyJSON → invalidate the articles cache →
-redirect to `/articles?updated=1` → success Toast on the Dashboard, mirroring
-Create's `?created=1`.
+**چرا کوئری کلاینتی برای مقاله‌ی در حال ویرایش وجود ندارد.** React Hook
+Form فقط یک‌بار، در mount، `defaultValues` را می‌خواند — اگر مقاله به‌صورت
+async از طریق TanStack Query می‌آمد، بعد از لود شدن یک `reset()` لازم بود.
+گرفتنش سمت سرور و پاس دادن به‌عنوان پراپ این را کاملاً دور می‌زند: تا زمان
+mount شدن Client Component، داده از قبل حاضر است. همچنین برای فرمی که
+یک‌بار پر می‌شود و بسته می‌شود، ارزش cache/refetch پس‌زمینه‌ای وجود ندارد.
 
-**Why no client-side query for the article being edited.** React Hook
-Form only reads `defaultValues` once, at mount — if the article arrived
-async via TanStack Query, a `reset()` call would be needed once it loaded.
-Fetching it server-side and passing it as a prop sidesteps that entirely:
-by the time the Client Component mounts, the data is already there. There
-is also no caching/background-refetch value for a form you fill in once
-and leave.
+**`userId` در آپدیت دوباره استخراج نمی‌شود.** برخلاف Create، `PUT
+/posts/:id` نیازی به `userId` ندارد (و راهی برای تغییرش هم نمی‌دهد) —
+DummyJSON خودش صاحب اصلی رکورد را می‌داند و آن را حفظ می‌کند. هندلر PUT فقط
+وجود کوکی سشن را چک می‌کند و دلیلی برای صدا زدن `/auth/me` اینجا ندارد.
 
-**`userId` isn't re-derived on update.** Unlike Create, `PUT /posts/:id`
-doesn't require (or accept a way to change) `userId` — DummyJSON already
-knows the original record's owner and preserves it automatically
-(verified). The PUT handler only checks that our session cookie exists;
-it has no reason to call `/auth/me` here.
-
-**Description starts empty, always** — even though the article already has
-a `body`. There's no way to know which part (if any) of an *existing*
-post's body was ever meant to be a "description"; guessing by splitting
-the text isn't attempted. If the user types something in Description while
-editing, it's folded into `body` the same way Create does
+**Description همیشه خالی شروع می‌شود** — حتی وقتی مقاله از قبل یک `body`
+دارد. هیچ راهی برای دانستن اینکه کدام بخش (اگر باشد) از body یک پست
+*موجود* قرار بوده description باشد وجود ندارد؛ حدس زدن با تقسیم متن هم
+امتحان نشده. اگر کاربر حین ویرایش چیزی در Description تایپ کند، همان‌طور
+که Create انجام می‌دهد داخل `body` ادغام می‌شود
 (`description + "\n\n" + body`).
 
-**Invalid / missing article.** A non-numeric slug or an id DummyJSON
-doesn't have (`404 "Post with id '...' not found"`, verified) both render
-Next's default not-found page via `notFound()` — Figma has no dedicated
-screen for this state, so nothing was designed for it here either.
+**مقاله‌ی نامعتبر / یافت‌نشده.** یک slug غیرعددی یا idای که DummyJSON ندارد
+(`404 "Post with id '...' not found"`) هر دو صفحه‌ی پیش‌فرض not-found نکست
+را با `notFound()` نشان می‌دهند — فیگما صفحه‌ی مشخصی برای این حالت ندارد،
+پس چیزی هم مخصوص آن طراحی نشده.
 
-**Persistence.** Same limitation as Create: `PUT /posts/:id` returns a real
-`200` with the edited fields echoed back, but a `GET` for that id right
-after still shows the untouched original (verified directly). The edit
-"succeeds" honestly from the API's point of view; DummyJSON just never
-keeps it — the Dashboard row still shows the new title/body/tags
-immediately regardless, via Local Overrides (above).
+**ماندگاری.** همان محدودیت Create: `PUT /posts/:id` یک `200` واقعی با
+فیلدهای ویرایش‌شده‌ی echo شده برمی‌گرداند، اما یک `GET` برای همان id بلافاصله
+بعد همچنان نسخه‌ی اصلی دست‌نخورده را نشان می‌دهد. ویرایش از نگاه API صادقانه
+"موفق" است؛ فقط DummyJSON آن را نگه نمی‌دارد — ردیف داشبورد بلافاصله عنوان/
+متن/تگ‌های جدید را از طریق Local Overrides (بالا) نشان می‌دهد.
 
-## Delete Article
+## حذف مقاله
 
-**Flow.** The row menu's Delete opens the existing confirmation `Modal`
-(unchanged since Phase 3/5 — its `isConfirming` prop already disabled
-Confirm and showed a loading spinner, so nothing new was needed there).
-Confirm now runs `useDeleteArticle` → `DELETE /api/articles/{id}` →
-DummyJSON → record the id in Local Overrides (see above — not a cache
-invalidation, since DummyJSON never actually deletes anything for a
-refetch to reflect) → close the modal → redirect to `/articles?deleted=1`
-→ success Toast on the Dashboard, same shape as Create/Edit. Cancel closes the modal and resets the mutation's error state
-(so a failed delete doesn't leave a stale error Toast showing the next time
-the modal opens for a different article). A failed delete keeps the modal
-open and shows an error Toast in the Dashboard instead of navigating away.
+**جریان.** گزینه‌ی Delete در منوی ردیف همان `Modal` تأیید موجود را باز
+می‌کند. Confirm حالا `useDeleteArticle` را اجرا می‌کند → `DELETE
+/api/articles/{id}` → DummyJSON → ثبت id در Local Overrides (بالا — نه
+invalidate کش، چون DummyJSON واقعاً چیزی حذف نمی‌کند که refetch منعکسش کند)
+→ بستن modal → ریدایرکت به `/articles?deleted=1` → Toast موفقیت روی
+داشبورد، مشابه Create/Edit. Cancel، modal را می‌بندد و state خطای mutation
+را ریست می‌کند (تا یک حذف ناموفق، Toast خطای قدیمی را برای مقاله‌ی بعدی
+نگه ندارد). حذف ناموفق، modal را باز نگه می‌دارد و یک Toast خطا روی داشبورد
+نشان می‌دهد به‌جای هدایت به جای دیگر.
 
-**Authorization.** DummyJSON's `DELETE /posts/:id` doesn't check
-authorization at all — verified, no `Authorization` header was needed for
-it to succeed. `/api/articles/[id]`'s `DELETE` handler is the only access
-control this operation has: it 401s without our own session cookie present,
-independent of whatever DummyJSON itself would or wouldn't allow.
+**Authorization.** `DELETE /posts/:id` در DummyJSON اصلاً authorization
+چک نمی‌کند — تأیید شده که هیچ هدر `Authorization` برای موفقیتش لازم نبود.
+هندلر `DELETE` در `/api/articles/[id]` تنها کنترل دسترسی این عملیات است:
+بدون وجود کوکی سشن خودمان 401 می‌دهد، مستقل از اینکه DummyJSON خودش چه
+اجازه‌ای می‌دهد یا نه.
 
-**Persistence.** Same limitation as Create/Edit: DummyJSON returns a real
-`200` with `isDeleted: true` and a `deletedOn` timestamp in its response,
-but a `GET` for that id immediately after still returns the original,
-un-deleted post (verified directly). `/api/articles/[id]`'s `DELETE`
-handler doesn't forward any of that DummyJSON response to the client — it
-returns only `{ success: true, id }`, since nothing else about the
-(never-actually-deleted) record is meaningful to show. The row still
-disappears from the Dashboard immediately — see Local Overrides above for
-how, despite this.
+**ماندگاری.** همان محدودیت Create/Edit: DummyJSON یک `200` واقعی با
+`isDeleted: true` و یک تایمستمپ `deletedOn` در پاسخش برمی‌گرداند، اما یک
+`GET` برای همان id بلافاصله بعد همچنان همان پست اصلی و حذف‌نشده را
+برمی‌گرداند. هندلر `DELETE` در `/api/articles/[id]` هیچ‌کدام از آن پاسخ
+DummyJSON را به کلاینت پاس نمی‌دهد — فقط `{ success: true, id }` برمی‌گرداند،
+چون هیچ چیز دیگری درباره‌ی رکورد (که واقعاً حذف نشده) برای نمایش معنادار
+نیست. ردیف بلافاصله از داشبورد ناپدید می‌شود — به بخش Local Overrides بالا
+نگاه کن که چطور علی‌رغم این اتفاق می‌افتد.
 
-## Known Limitations / Future Improvements
+## محدودیت‌های شناخته‌شده / بهبودهای آینده
 
-- **No refresh-token rotation.** DummyJSON's access token expires after 60
-  minutes (matched by the cookie's `maxAge`); after that, the user is
-  signed out on next request rather than silently re-authenticated.
-  Automatic refresh was left out of scope — it adds real complexity
-  (retry-on-401, concurrent-request races) that isn't justified for this
-  challenge.
-- **Yekan Bakh VF (Persian typography) isn't wired up.** No fallback font
-  was substituted for it; Persian text, if any is added later, will render
-  in the browser's default font until the real font file is available.
-- **Article author is shown as `User #{id}`, not a real username** —
-  DummyJSON posts don't include one, and resolving it would mean an extra
-  request per table row.
-- **Create/Edit/Delete don't actually persist changes on DummyJSON's end**
-  (see Create Article / Edit Article / Delete Article above) — a DummyJSON
-  limitation, not an app bug. The Dashboard list itself stays accurate
-  within a session via the Local Overrides mechanism (above); a hard
-  refresh (or DummyJSON's data from any other client) always shows the
-  real, unmodified state.
-- **The Tags panel briefly shows "Loading tags…" on first paint** of the
-  Create page — unlike the articles list, this query isn't server-prefetched.
-  A secondary panel's brief loading state was judged not worth the same
-  SSR-prefetch treatment given to the primary Dashboard list.
-- **Real browser interactions (clicks, keyboard navigation, focus order,
-  loading-state flashes) are code-reviewed, not browser-tested** — this
-  project has no browser automation (e.g. Playwright) set up, so anything
-  that only manifests through actual user interaction in a running browser
-  has been verified by reading the code, not by observing it run.
-- **Actual rendered appearance at 375/768/1024/1440px, and opening/closing
-  the mobile Sidebar drawer, are code-reviewed only, for the same reason**
-  — confirmed that the right Tailwind classes are present and compiled
-  (`lg:hidden`, `md:block`, the drawer's `-translate-x-full`, etc.), not
-  that they look correct in an actual viewport.
-- **Client-side navigation while a component stays mounted (e.g. the
-  Delete redirect) can only be verified by reading the code, not curl** —
-  every curl request is a fresh page load, so it can confirm a URL renders
-  the right thing on its own, but not that a `router.push()` from an
-  already-mounted page actually reaches that state without a manual
-  refresh. The `useSearchParams()`/`key`-remount fixes here follow
-  documented React/Next.js behavior for exactly this scenario, but a real
-  browser is needed to watch the click-through happen.
-- **Same limitation applies to Local Overrides** (a created article
-  appearing at the top of the list, an edited row showing new fields, a
-  deleted row disappearing) — verified that the underlying cache-write
-  functions are correct and that every mutation API call still succeeds,
-  but the actual "create an article, land back on /articles, see it at the
-  top" click-through needs a real browser to observe directly.
+- **بدون چرخش refresh-token.** access token در DummyJSON بعد از ۶۰ دقیقه منقضی
+  می‌شود (مطابق با `maxAge` کوکی)؛ بعد از آن، کاربر در درخواست بعدی خارج
+  می‌شود به‌جای re-authenticate خاموش. رفرش خودکار عمداً خارج از دامنه‌ی
+  کار مانده — پیچیدگی واقعی (retry-on-401، race شرایط همزمان) اضافه می‌کند
+  که برای این چالش توجیه ندارد.
+- **فونت پروژه همچنان Inter است.** جایگزینی با فونت فارسی Yekan Bakh امتحان
+  شد، اما نسخه‌ی رایگان/مجاز برای استفاده در پروژه در دسترس نبود (فقط نسخه‌ی
+  تجاری/غیررایگان پیدا شد)، پس این تغییر برگردانده شد. اگر بعداً یک فونت
+  فارسی با لایسنس مناسب در دسترس باشد، همان الگوی `next/font/local` که برای
+  Yekan Bakh امتحان شده بود قابل استفاده است.
+- **آدرس مقاله به‌صورت `User #{id}` نشان داده می‌شود، نه یک یوزرنیم واقعی**
+  — پست‌های DummyJSON یوزرنیم ندارند و حل‌کردنش یعنی یک درخواست اضافه به
+  ازای هر ردیف جدول.
+- **Create/Edit/Delete واقعاً چیزی را سمت DummyJSON ذخیره نمی‌کنند** (به
+  بخش‌های ساخت/ویرایش/حذف مقاله بالا نگاه کن) — یک محدودیت DummyJSON است،
+  نه باگ این اپ. خود لیست داشبورد در طول یک سشن با مکانیزم Local Overrides
+  (بالا) دقیق می‌ماند؛ یک رفرش کامل (یا داده‌ی DummyJSON از هر کلاینت دیگر)
+  همیشه وضعیت واقعی و دست‌نخورده را نشان می‌دهد.
+- **پنل Tags در اولین رندر صفحه‌ی Create کوتاه "Loading tags…" نشان می‌دهد**
+  — برخلاف لیست مقالات، این کوئری سمت سرور prefetch نمی‌شود. برای یک پنل
+  ثانویه، این loading کوتاه ارزش همان رفتار SSR-prefetch لیست اصلی داشبورد
+  را نداشت.
+- **تعامل‌های واقعی مرورگر (کلیک، ناوبری صفحه‌کلید، ترتیب focus، فلش‌های
+  حالت loading) فقط با بازخوانی کد بررسی شده‌اند، نه تست مرورگری** — این
+  پروژه ابزار خودکارسازی مرورگر (مثل Playwright) ندارد، پس هرچه فقط با
+  تعامل واقعی کاربر در یک مرورگر در حال اجرا مشخص می‌شود، با خواندن کد
+  تأیید شده، نه با مشاهده‌ی اجرایش.
+- **نمای واقعی رندرشده در عرض‌های 375/768/1024/1440 پیکسل، و باز/بسته شدن
+  drawer موبایل Sidebar، به همان دلیل فقط با بازخوانی کد بررسی شده‌اند** —
+  تأیید شده که کلاس‌های درست Tailwind حاضر و کامپایل‌شده‌اند (`lg:hidden`،
+  `md:block`، `-translate-x-full` مربوط به drawer و...)، نه اینکه در یک
+  viewport واقعی درست به‌نظر می‌رسند.
+- **ناوبری سمت کلاینت درحالی‌که یک کامپوننت mount شده باقی می‌ماند (مثل
+  ریدایرکت Delete) فقط با خواندن کد قابل تأیید است، نه curl** — هر
+  درخواست curl یک بارگذاری کامل صفحه است، پس می‌تواند تأیید کند که یک URL
+  به‌تنهایی چیز درستی رندر می‌کند، اما نه اینکه یک `router.push()` از یک
+  صفحه‌ی از قبل mount‌شده واقعاً بدون رفرش دستی به آن حالت می‌رسد. تغییرات
+  `useSearchParams()`/remount با `key` اینجا از رفتار مستند React/Next.js
+  برای دقیقاً همین سناریو پیروی می‌کنند، ولی برای دیدن واقعی کلیک‌ها یک
+  مرورگر واقعی لازم است.
+- **همین محدودیت برای Local Overrides هم صدق می‌کند** (ظاهر شدن یک مقاله‌ی
+  ساخته‌شده بالای لیست، نمایش فیلدهای جدید یک ردیف ویرایش‌شده، ناپدید شدن
+  یک ردیف حذف‌شده) — تأیید شده که توابع نوشتن کش درست هستند و هر تماس API
+  مربوط به mutation موفق می‌شود، اما مسیر واقعی "یک مقاله بساز، به
+  /articles برگرد، آن را بالای لیست ببین" نیازمند یک مرورگر واقعی برای
+  مشاهده‌ی مستقیم است.

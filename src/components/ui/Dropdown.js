@@ -5,9 +5,6 @@ import { cx } from "@/utils/cx";
 import { EllipsisIcon } from "./icons";
 import Button from "./Button";
 
-// Local, per-instance open state (each row's Actions menu is independent —
-// there's no reason for this to live in shared/global state). Closes on
-// Escape and on click outside.
 export default function Dropdown({ items, triggerLabel = "More actions" }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);

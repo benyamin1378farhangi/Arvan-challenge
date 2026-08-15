@@ -4,10 +4,6 @@ import { apiFetch, ApiError } from "@/lib/api/http";
 import { fetchArticlesPage } from "@/lib/api/articles.server";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 
-// proxy.js already guards the /articles page route itself, but that's a
-// page-navigation guard, not an API guard — this checks the session
-// cookie again here so the endpoint isn't reachable unauthenticated just
-// because it wasn't visited through the page.
 export async function GET(request) {
   const cookieStore = await cookies();
   if (!cookieStore.get(SESSION_COOKIE_NAME)?.value) {
@@ -49,11 +45,6 @@ export async function POST(request) {
   }
 
   try {
-    // DummyJSON's /posts/add requires a `userId`, but the client can't be
-    // trusted to supply its own — it's derived server-side from the
-    // session, the same way /api/auth/me already does (never decoded from
-    // the JWT directly, per the Phase 4 decision to keep token
-    // interpretation in one place).
     const me = await apiFetch("/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     });

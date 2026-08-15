@@ -1,18 +1,6 @@
 import { cx } from "@/utils/cx";
 import { CheckCircleIcon } from "./icons";
 
-// Presentational only — no visibility/queue state lives here. How a toast
-// gets triggered (a single "current toast" slot vs. a stack, how long it
-// stays visible) depends on the caller.
-//
-// Shape/sizing (pill, hug-content) is shared by both variants — a base
-// Toast property, not something that plausibly differs per color. Icon
-// presence and colors are per-variant: the error variant's pill background
-// (`error-soft`) was pixel-sampled directly from a Figma reference
-// screenshot (Sign-in → Failed), which also showed no icon on the error
-// toast — the success variant's icon/colors were separately confirmed
-// earlier from Figma's variable dump and a "Article created" screenshot,
-// so it keeps its icon rather than assuming symmetry with error.
 const VARIANTS = {
   success: {
     container: "bg-success-bg text-success-fg",
@@ -36,7 +24,7 @@ export default function Toast({
     <div
       role="status"
       className={cx(
-        "inline-flex max-w-full items-start gap-2 rounded-full px-4 py-3 shadow-toast",
+        "inline-flex max-w-full items-start gap-2 rounded-xl px-4 py-3 shadow-toast",
         container,
         className,
       )}

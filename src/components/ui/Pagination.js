@@ -2,25 +2,11 @@ import Link from "next/link";
 import { cx } from "@/utils/cx";
 import { ChevronLeftIcon, ChevronRightIcon } from "./icons";
 
-// Real URL navigation (next/link), not onClick + setState — pagination is
-// URL-driven per the routing decision made in Phase 1 (`/articles` for
-// page 1, `/articles/page/:page` after that), so page links need to be
-// real hrefs a user can share, bookmark, or hit back/forward on.
 function getPageNumbers(current, total) {
   const pages = new Set([1, total, current - 1, current, current + 1]);
   return [...pages].filter((page) => page >= 1 && page <= total).sort((a, b) => a - b);
 }
 
-// The bordered/rounded wrapper (pixel-confirmed from a Figma reference
-// screenshot: a #CCCCCC — i.e. `neutral-st2` — box around the whole
-// control) wraps both nav variants so it's present regardless of which
-// breakpoint is showing.
-//
-// Below `sm` (Phase 9), the full number list doesn't reliably fit — this
-// renders both the full nav and a compact Prev/"n / total"/Next nav, and
-// lets Tailwind's `sm:` breakpoint pick one; there's no JS media-query
-// logic; the compact nav's Prev/Next hrefs come from the same
-// currentPage/totalPages math, just rendered differently.
 export default function Pagination({ currentPage, totalPages, getHref }) {
   if (totalPages <= 1) return null;
 

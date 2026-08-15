@@ -1,10 +1,6 @@
 import { forwardRef } from "react";
 import { cx } from "@/utils/cx";
 
-// Same visual language as Input — the Design Kit only defines a
-// single-line Input primitive, there's no separate "Textarea" component
-// to mirror — but for the Body field, which New/Edit Article render as a
-// multi-line box.
 const Textarea = forwardRef(function Textarea(
   { error = false, className = "", rows = 10, ...props },
   ref,

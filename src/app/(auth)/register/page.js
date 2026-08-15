@@ -31,10 +31,6 @@ export default function RegisterPage() {
 
   return (
     <>
-      {/* Same fixed-top placement as Login's error toast (Sign-in ->
-          Failed reference) — no Figma screenshot exists for a failed
-          Sign-up specifically, but it's the same Toast/pattern, so it's
-          kept consistent rather than left inline while Login isn't. */}
       {registerMutation.isError && (
         <div className="fixed inset-x-0 top-6 z-50 flex justify-center px-4">
           <Toast

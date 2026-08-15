@@ -1,11 +1,11 @@
-// DummyJSON's user objects (from both /auth/login and /auth/me) include a
-// lot more than a blog dashboard needs — including the account's plaintext
-// password, echoed back in the response. Shared by both routes so there's
-// exactly one place that decides what's safe to send to the client.
+import { DEMO_LOGIN_USERNAME, DUMMYJSON_ACCOUNT_FOR_DEMO_LOGIN } from "./constants";
+
 export function pickPublicUser(user) {
+  const isDemoAccount = user.username === DUMMYJSON_ACCOUNT_FOR_DEMO_LOGIN.username;
+
   return {
     id: user.id,
-    username: user.username,
+    username: isDemoAccount ? DEMO_LOGIN_USERNAME : user.username,
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,

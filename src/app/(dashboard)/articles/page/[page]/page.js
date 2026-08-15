@@ -15,7 +15,6 @@ export default async function ArticlesPagedPage({ params }) {
     notFound();
   }
 
-  // Page 1's canonical URL is /articles, not /articles/page/1.
   if (page === 1) {
     redirect(ROUTES.articles);
   }
@@ -26,12 +25,8 @@ export default async function ArticlesPagedPage({ params }) {
     queryFn: () => fetchArticlesPage(page),
   });
 
-  // A page past the last one isn't an error — DummyJSON just returns an
-  // empty `posts` array for a skip beyond `total` (verified directly),
-  // which ArticlesList already renders as the empty state.
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      {/* See articles/page.js — ArticlesList uses useSearchParams(). */}
       <Suspense fallback={null}>
         <ArticlesList page={page} />
       </Suspense>

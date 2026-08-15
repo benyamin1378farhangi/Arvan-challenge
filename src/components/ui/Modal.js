@@ -6,21 +6,6 @@ import { cx } from "@/utils/cx";
 import { CheckCircleIcon, WarningIcon } from "./icons";
 import Button from "./Button";
 
-// Controlled component (open/onClose come from the parent) rendered
-// through a portal so it always sits above the dashboard layout regardless
-// of where it's mounted in the tree — the standard approach for anything
-// that needs to overlay the whole page.
-//
-// Only one size is implemented (matching the ~456px width used by the
-// Delete confirmation modal, the only modal in the Challenge) — the
-// Design Kit's small/medium/large variants aren't all used anywhere, so a
-// `size` prop wasn't added speculatively.
-//
-// Note: Escape-to-close and click-outside-to-close are handled, and focus
-// moves to the dialog on open. A full focus trap (Tab cycling only inside
-// the dialog) is not implemented — it isn't needed for this Challenge's
-// single confirmation-modal use case, and pulling in a dedicated
-// focus-trap dependency for it isn't justified at this stage.
 export default function Modal({
   open,
   onClose,
@@ -47,11 +32,6 @@ export default function Modal({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
-  // `open` starts false in every real usage, so the server and the first
-  // client render both return null here — no hydration mismatch, and no
-  // extra "mounted" state needed just to gate the portal until the client
-  // has `document` available (it always does by the time `open` flips
-  // true, since that only happens from a user interaction).
   if (!open) return null;
 
   const Icon = danger ? WarningIcon : CheckCircleIcon;
@@ -98,9 +78,6 @@ export default function Modal({
           </div>
         )}
 
-        {/* ترتیب دکمه‌ها عمداً بین دو حالت فرق دارد: طبق Design Kit، در حالت
-            danger (مثل تأیید حذف) دکمه‌ی خطر سمت چپ و Cancel سمت راست است؛
-            در حالت عادی برعکس (Cancel چپ، Confirm راست). */}
         <div className="flex items-center justify-end gap-4 border-t border-neutral-st3 px-6 py-4">
           {danger && (
             <Button variant="danger" onClick={onConfirm} isLoading={isConfirming}>

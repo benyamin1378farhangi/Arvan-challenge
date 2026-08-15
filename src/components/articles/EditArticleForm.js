@@ -5,18 +5,11 @@ import ArticleForm from "@/components/articles/ArticleForm";
 import { useUpdateArticle } from "@/hooks/useUpdateArticle";
 import { ROUTES } from "@/constants/routes";
 
-// Thin wrapper around ArticleForm — same form, same validation, same
-// layout as Create; only the submit behavior (update vs. create) and
-// initial values differ.
 export default function EditArticleForm({ article }) {
   const router = useRouter();
   const updateArticleMutation = useUpdateArticle();
 
   const handleSubmit = (values) => {
-    // Same body-merge rule as Create. Description always starts empty for
-    // an existing article (see Phase 7 plan — there's no way to know
-    // which part of an existing post's body was ever a "description"),
-    // so this only has an effect if the user types something new here.
     const body = values.description
       ? `${values.description}\n\n${values.body}`
       : values.body;

@@ -9,9 +9,6 @@ export function useLogin() {
   return useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      // Seed the cache directly instead of invalidating+refetching — we
-      // already have the user object from the login response, no need for
-      // a second round-trip to /api/auth/me right away.
       queryClient.setQueryData(["auth", "me"], { user: data.user });
     },
   });

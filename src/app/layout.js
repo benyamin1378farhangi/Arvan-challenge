@@ -2,7 +2,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 
-// Only the two weights the Design Kit actually uses (Regular / Semi Bold).
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "600"],

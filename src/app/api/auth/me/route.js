@@ -18,10 +18,6 @@ export async function GET() {
     });
     return NextResponse.json({ user: pickPublicUser(user) });
   } catch {
-    // DummyJSON returns 401 for a missing token but 500 for an
-    // invalid/expired one (verified directly against the live API) —
-    // either way it means the session is no longer usable, so this
-    // normalizes both into a single 401 and drops the stale cookie.
     const response = NextResponse.json(
       { message: "Session expired" },
       { status: 401 },

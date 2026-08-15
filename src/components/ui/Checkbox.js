@@ -4,10 +4,6 @@ import { useEffect, useRef } from "react";
 import { cx } from "@/utils/cx";
 import { CheckIcon, MinusIcon } from "./icons";
 
-// Real <input type="checkbox">, visually styled via `appearance-none` with
-// our own icon drawn on top — keeps native keyboard/screen-reader behavior
-// while matching the Design Kit look. `indeterminate` has no HTML
-// attribute equivalent, so it's set imperatively via ref.
 export default function Checkbox({
   checked = false,
   indeterminate = false,

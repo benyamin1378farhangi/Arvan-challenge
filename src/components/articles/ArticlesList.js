@@ -24,10 +24,12 @@ function getExcerpt(body) {
   return words.length > 20 ? `${words.slice(0, 20).join(" ")}…` : body;
 }
 
+// طبق تصویر مرجع Figma، فقط created/updated پیشوند بولد "Well done!" دارند؛
+// پیام Delete یک متن ساده و بدون پیشوند است.
 const SUCCESS_TOAST_MESSAGES = {
-  created: "Article created successfully",
-  updated: "Article updated successfully",
-  deleted: "Article deleted successfully",
+  created: { title: "Well done!", description: "Article created successfully" },
+  updated: { title: "Well done!", description: "Article updated successfully" },
+  deleted: { title: "Article deleted successfully", description: "" },
 };
 
 // How long the success Toast stays up before auto-dismissing (Figma shows
@@ -51,9 +53,11 @@ function SuccessToast({ type }) {
 
   if (!visible) return null;
 
+  const { title, description } = SUCCESS_TOAST_MESSAGES[type];
+
   return (
     <div className="fixed inset-x-0 top-6 z-50 flex justify-center px-4">
-      <Toast variant="success" title="Well done!" description={SUCCESS_TOAST_MESSAGES[type]} />
+      <Toast variant="success" title={title} description={description} />
     </div>
   );
 }

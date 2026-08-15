@@ -41,12 +41,14 @@ export function CheckCircleIcon(props) {
   );
 }
 
+// طبق اسکرین‌شات صفحه‌ی Icons در Design Kit، این آیکون یک مثلث است، نه دایره
+// (اصلاح‌شده — نسخه‌ی قبلی اشتباهاً دایره‌ای بود).
 export function WarningIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v5" />
-      <circle cx="12" cy="16" r="0.75" fill="currentColor" stroke="none" />
+      <path d="M12 3.5 21.5 20 2.5 20Z" />
+      <path d="M12 9.5v5" />
+      <circle cx="12" cy="17.2" r="0.75" fill="currentColor" stroke="none" />
     </svg>
   );
 }

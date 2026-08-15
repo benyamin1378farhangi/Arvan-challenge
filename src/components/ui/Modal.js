@@ -98,17 +98,23 @@ export default function Modal({
           </div>
         )}
 
+        {/* ترتیب دکمه‌ها عمداً بین دو حالت فرق دارد: طبق Design Kit، در حالت
+            danger (مثل تأیید حذف) دکمه‌ی خطر سمت چپ و Cancel سمت راست است؛
+            در حالت عادی برعکس (Cancel چپ، Confirm راست). */}
         <div className="flex items-center justify-end gap-4 border-t border-neutral-st3 px-6 py-4">
+          {danger && (
+            <Button variant="danger" onClick={onConfirm} isLoading={isConfirming}>
+              {confirmLabel}
+            </Button>
+          )}
           <Button variant="secondary" onClick={onClose}>
             {cancelLabel}
           </Button>
-          <Button
-            variant={danger ? "danger" : "primary"}
-            onClick={onConfirm}
-            isLoading={isConfirming}
-          >
-            {confirmLabel}
-          </Button>
+          {!danger && (
+            <Button variant="primary" onClick={onConfirm} isLoading={isConfirming}>
+              {confirmLabel}
+            </Button>
+          )}
         </div>
       </div>
     </div>,

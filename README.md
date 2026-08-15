@@ -55,18 +55,12 @@ Tags (که به‌تنهایی از عرض یک موبایل هم بیشتر ب�
 
 ## احراز هویت
 
-اطلاعات ورود دمو:
+اطلاعات ورود دمو (اکانت تستی DummyJSON):
 
 ```
-username: arvan
-password: arvanpass
+username: emilys
+password: emilyspass
 ```
-
-این یک اکانت واقعی روی DummyJSON نیست؛ هندلر `POST /api/auth/login` این
-اطلاعات را قبل از تماس با DummyJSON، سمت سرور به اکانت تستی واقعی DummyJSON
-(`emilys`/`emilyspass`) نگاشت می‌کند (`resolveDummyJsonCredentials` در
-`lib/auth/constants.js`). خود اکانت `emilys` هم همچنان کار می‌کند؛ `arvan`
-صرفاً یک نام کاربری آشناتر برای دمو است.
 
 **معماری.** کلاینت هرگز مستقیم با DummyJSON برای auth صحبت نمی‌کند.
 `useLogin`/`useLogout`/`useCurrentUser` (با TanStack Query) Route Handler های

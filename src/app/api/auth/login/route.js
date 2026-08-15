@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiFetch, ApiError } from "@/lib/api/http";
-import {
-  SESSION_COOKIE_NAME,
-  SESSION_MAX_AGE_SECONDS,
-  resolveDummyJsonCredentials,
-} from "@/lib/auth/constants";
+import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/constants";
 import { pickPublicUser } from "@/lib/auth/pickPublicUser";
 
 export async function POST(request) {
@@ -18,10 +14,12 @@ export async function POST(request) {
   }
 
   try {
-    const credentials = resolveDummyJsonCredentials(body.username, body.password);
     const data = await apiFetch("/auth/login", {
       method: "POST",
-      body: JSON.stringify(credentials),
+      body: JSON.stringify({
+        username: body.username,
+        password: body.password,
+      }),
     });
 
     const response = NextResponse.json({ user: pickPublicUser(data) });

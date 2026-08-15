@@ -23,7 +23,7 @@ export default function Header({ userName, onLogout, onMenuClick }) {
         Arvancloud Challenge
       </p>
 
-      <div className="flex justify-end">
+      <div className="col-start-3 flex justify-end">
         <Button variant="secondary" onClick={onLogout} className="shrink-0">
           Log out
         </Button>

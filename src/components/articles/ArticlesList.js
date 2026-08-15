@@ -84,7 +84,7 @@ export default function ArticlesList({ page }) {
     ...(post.isLocal
       ? []
       : [{ label: "Edit", onClick: () => router.push(ROUTES.editArticle(post.id)) }]),
-    { label: "Delete", danger: true, onClick: () => setDeleteTarget(post) },
+    { label: "Delete", onClick: () => setDeleteTarget(post) },
   ];
 
   return (

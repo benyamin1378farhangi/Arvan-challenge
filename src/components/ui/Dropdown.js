@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { cx } from "@/utils/cx";
 import { EllipsisIcon } from "./icons";
 import Button from "./Button";
 
@@ -56,10 +55,7 @@ export default function Dropdown({ items, triggerLabel = "More actions" }) {
                   setOpen(false);
                   item.onClick();
                 }}
-                className={cx(
-                  "block w-full px-4 py-2 text-left text-body-2 tracking-body-2 hover:bg-neutral-bg2",
-                  item.danger ? "text-error" : "text-neutral-fg1",
-                )}
+                className="block w-full px-4 py-2 text-left text-body-2 tracking-body-2 text-neutral-fg1 hover:bg-neutral-bg2"
               >
                 {item.label}
               </button>
